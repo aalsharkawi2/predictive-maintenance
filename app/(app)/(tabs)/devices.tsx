@@ -35,6 +35,8 @@ type DeviceActionsMap = {
   لوحة: PanelAction;
 };
 
+type DeviceActions<T extends DeviceType> = DeviceActionsMap[T];
+
 export default function DevicesScreen() {
   const [deviceId, setDeviceId] = useState('');
   const [selectedMaintenanceType, setSelectedMaintenanceType] =
@@ -58,6 +60,47 @@ export default function DevicesScreen() {
       </View>
     );
   };
+  function actionsButtons<T extends DeviceType>(deviceType: T): JSX.Element {
+    const deviceActions: Array<DeviceActions<T>> = (() => {
+      switch (deviceType) {
+        case 'سكينة':
+          return [
+            'مسح العوازل',
+            'تشحيم السكينة',
+            'تعديل اللوبات',
+            'تغيير التشعيرات',
+          ] as DeviceActions<T>[];
+        case 'محول':
+          return [
+            'تنظيف الجسم والعوازل وجهاز السليكاجيل',
+            'التربيط على العوازل والجسم والكوس والمناولات',
+            'عزل الفازات بشريط لحام',
+          ] as DeviceActions<T>[];
+        case 'لوحة':
+          return [
+            'تنظيف اللوحة',
+            'التربيط على الكوس والبارات',
+            'عزل الفازات بشريط لحام',
+            'تزويد فوم',
+            'إزالة عش',
+            'تغيير قواطع',
+            'تغيير ورد ومسامير',
+          ] as DeviceActions<T>[];
+        default:
+          return [] as DeviceActions<T>[];
+      }
+    })();
+    return (
+      <>
+        {deviceActions.map((action) => (
+          <TouchableOpacity style={styles.checkItem}>
+            <CheckCircle2 size={24} color="#2563eb" />
+            <Text style={styles.checkText}>{action}</Text>
+          </TouchableOpacity>
+        ))}
+      </>
+    );
+  }
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -114,29 +157,35 @@ export default function DevicesScreen() {
             </View>
           </View>
         )}
-        {
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
-            <View style={styles.checklist}>
-              <TouchableOpacity style={styles.checkItem}>
-                <CheckCircle2 size={24} color="#2563eb" />
-                <Text style={styles.checkText}>فحص التوصيلات</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.checkItem}>
-                <CheckCircle2 size={24} color="#2563eb" />
-                <Text style={styles.checkText}>تنظيف المكونات</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.checkItem}>
-                <CheckCircle2 size={24} color="#2563eb" />
-                <Text style={styles.checkText}>فحص العوازل</Text>
-              </TouchableOpacity>
+        {selectedMaintenanceType === 'جهاز' ? (
+          selectedDeviceType !== null ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
+              <View style={styles.checklist}>
+                {actionsButtons(selectedDeviceType)}
+              </View>
             </View>
-          </View>
-        }
-        <TouchableOpacity style={styles.photoButton}>
-          <Camera size={24} color="#ffffff" />
-          <Text style={styles.photoButtonText}>التقاط صورة</Text>
-        </TouchableOpacity>
+          ) : (
+            <View></View>
+          )
+        ) : (
+          selectedMaintenanceType !== null && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="placeholder"
+                textAlign="right"
+              />
+            </View>
+          )
+        )}
+        {selectedDeviceType && (
+          <TouchableOpacity style={styles.photoButton}>
+            <Camera size={24} color="#ffffff" />
+            <Text style={styles.photoButtonText}>التقاط صورة</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.submitButton}>
           <Text style={styles.submitButtonText}>حفظ وإنهاء</Text>
         </TouchableOpacity>
@@ -224,7 +273,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   checkItem: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 12,
   },
@@ -232,6 +281,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo-Regular',
     fontSize: 16,
     color: '#1f2937',
+    flex: 1,
   },
   photoButton: {
     backgroundColor: '#2563eb',
