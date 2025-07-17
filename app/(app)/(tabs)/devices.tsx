@@ -336,6 +336,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   SelectedCheckCircleContainer: {
+    borderRadius: 20,
     backgroundColor: '#2563eb',
   },
   checkItem: {
@@ -352,6 +353,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1f2937',
     flex: 1,
+    textAlign: 'right',
   },
   photoButton: {
     backgroundColor: '#2563eb',
