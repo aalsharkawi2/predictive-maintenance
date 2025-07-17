@@ -6,47 +6,77 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { useState } from 'react';
+import { JSX, useState } from 'react';
 import { Camera, CheckCircle2 } from 'lucide-react-native';
 
-type DeviceType = 'سكينة' | 'جهاز' | 'لوحة';
+type MaintenanceType = 'نهاية' | 'جهاز';
+type DeviceType = 'سكينة' | 'محول' | 'لوحة';
+type DisconnectingSwitchAction =
+  | 'مسح العوازل'
+  | 'تشحيم السكينة'
+  | 'تعديل اللوبات'
+  | 'تغيير التشعيرات';
+type TransformerAction =
+  | 'تنظيف الجسم والعوازل وجهاز السليكاجيلتنظيف الجسم والعوازل وجهاز السليكاجيل'
+  | 'التربيط على العوازل والجسم والكوس والمناولات'
+  | 'عزل الفازات بشريط لحام';
+type PanelAction =
+  | 'تنظيف اللوحة'
+  | 'التربيط على الكوس والبارات'
+  | 'عزل الفازات بشريط لحام'
+  | 'تزويد فوم'
+  | 'إزالة عش'
+  | 'تغيير قواطع'
+  | 'تغيير ورد ومسامير';
+
+type DeviceActionsMap = {
+  سكينة: DisconnectingSwitchAction;
+  محول: TransformerAction;
+  لوحة: PanelAction;
+};
 
 export default function DevicesScreen() {
   const [deviceId, setDeviceId] = useState('');
-  const [selectedType, setSelectedType] = useState<DeviceType | null>(null);
+  const [selectedMaintenanceType, setSelectedMaintenanceType] =
+    useState<MaintenanceType | null>(null);
+  const [selectedDeviceType, setSelectedDeviceType] =
+    useState<DeviceType | null>(null);
 
-  const deviceTypes: DeviceType[] = ['سكينة', 'جهاز', 'لوحة'];
-
+  const maintenanceTypes: MaintenanceType[] = ['نهاية', 'جهاز'];
+  const deviceTypes: DeviceType[] = ['سكينة', 'محول', 'لوحة'];
+  const identifier = (type: MaintenanceType): JSX.Element => {
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>معرف ال{type}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={type === 'جهاز' ? 'ص/ع/1/ق/1/ج/1' : 'مغذي J105'}
+          value={deviceId}
+          onChangeText={setDeviceId}
+          textAlign="right"
+        />
+      </View>
+    );
+  };
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>معرف الجهاز</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="ص/ع/1/ق/1/ج/1"
-            value={deviceId}
-            onChangeText={setDeviceId}
-            textAlign="right"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>نوع المكون</Text>
+          <Text style={styles.sectionTitle}>نوع الصيانة</Text>
           <View style={styles.typeButtons}>
-            {deviceTypes.map((type) => (
+            {maintenanceTypes.map((type) => (
               <TouchableOpacity
                 key={type}
                 style={[
                   styles.typeButton,
-                  selectedType === type && styles.selectedType,
+                  selectedMaintenanceType === type && styles.selectedType,
                 ]}
-                onPress={() => setSelectedType(type)}
+                onPress={() => setSelectedMaintenanceType(type)}
               >
                 <Text
                   style={[
                     styles.typeText,
-                    selectedType === type && styles.selectedTypeText,
+                    selectedMaintenanceType === type && styles.selectedTypeText,
                   ]}
                 >
                   {type}
@@ -55,30 +85,58 @@ export default function DevicesScreen() {
             ))}
           </View>
         </View>
+        {selectedMaintenanceType !== null &&
+          identifier(selectedMaintenanceType)}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>الإجراءات المطلوبة</Text>
-          <View style={styles.checklist}>
-            <TouchableOpacity style={styles.checkItem}>
-              <CheckCircle2 size={24} color="#2563eb" />
-              <Text style={styles.checkText}>فحص التوصيلات</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.checkItem}>
-              <CheckCircle2 size={24} color="#2563eb" />
-              <Text style={styles.checkText}>تنظيف المكونات</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.checkItem}>
-              <CheckCircle2 size={24} color="#2563eb" />
-              <Text style={styles.checkText}>فحص العوازل</Text>
-            </TouchableOpacity>
+        {selectedMaintenanceType === 'جهاز' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>نوع المكون</Text>
+            <View style={styles.typeButtons}>
+              {deviceTypes.map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.typeButton,
+                    selectedDeviceType === type && styles.selectedType,
+                  ]}
+                  onPress={() => setSelectedDeviceType(type)}
+                >
+                  <Text
+                    style={[
+                      styles.typeText,
+                      selectedDeviceType === type && styles.selectedTypeText,
+                    ]}
+                  >
+                    {type}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
-
+        )}
+        {
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
+            <View style={styles.checklist}>
+              <TouchableOpacity style={styles.checkItem}>
+                <CheckCircle2 size={24} color="#2563eb" />
+                <Text style={styles.checkText}>فحص التوصيلات</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.checkItem}>
+                <CheckCircle2 size={24} color="#2563eb" />
+                <Text style={styles.checkText}>تنظيف المكونات</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.checkItem}>
+                <CheckCircle2 size={24} color="#2563eb" />
+                <Text style={styles.checkText}>فحص العوازل</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        }
         <TouchableOpacity style={styles.photoButton}>
           <Camera size={24} color="#ffffff" />
           <Text style={styles.photoButtonText}>التقاط صورة</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.submitButton}>
           <Text style={styles.submitButtonText}>حفظ وإنهاء</Text>
         </TouchableOpacity>
