@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { JSX, useState } from 'react';
+import { JSX, useState, useEffect, use } from 'react';
 import { Camera, CheckCircle2 } from 'lucide-react-native';
 
 type MaintenanceType = 'نهاية' | 'جهاز';
@@ -36,14 +36,31 @@ type DeviceActionsMap = {
 };
 
 type DeviceActions<T extends DeviceType> = DeviceActionsMap[T];
-
+type AnyAction = DisconnectingSwitchAction | TransformerAction | PanelAction;
 export default function DevicesScreen() {
   const [deviceId, setDeviceId] = useState('');
   const [selectedMaintenanceType, setSelectedMaintenanceType] =
     useState<MaintenanceType | null>(null);
   const [selectedDeviceType, setSelectedDeviceType] =
     useState<DeviceType | null>(null);
-
+  const [deviceActions, setDeviceActions] = useState<{
+    [key in DeviceType]?: {
+      action: DeviceActions<key>;
+      isSelected: boolean;
+    }[];
+  }>({});
+  useEffect(() => {
+    if (selectedDeviceType && !deviceActions[selectedDeviceType]) {
+      const actions = getDeviceActions(selectedDeviceType);
+      setDeviceActions((prev) => ({
+        ...prev,
+        [selectedDeviceType]: actions.map((action) => ({
+          action: action,
+          isSelected: false,
+        })),
+      }));
+    }
+  }, [selectedDeviceType]);
   const maintenanceTypes: MaintenanceType[] = ['نهاية', 'جهاز'];
   const deviceTypes: DeviceType[] = ['سكينة', 'محول', 'لوحة'];
   const identifier = (type: MaintenanceType): JSX.Element => {
@@ -60,42 +77,80 @@ export default function DevicesScreen() {
       </View>
     );
   };
+  const getDeviceActions = <T extends DeviceType>(
+    deviceType: T,
+  ): DeviceActions<T>[] => {
+    let actions;
+    switch (deviceType) {
+      case 'سكينة':
+        actions = [
+          'مسح العوازل',
+          'تشحيم السكينة',
+          'تعديل اللوبات',
+          'تغيير التشعيرات',
+        ];
+        return actions as DeviceActions<T>[];
+      case 'محول':
+        actions = [
+          'تنظيف الجسم والعوازل وجهاز السليكاجيل',
+          'التربيط على العوازل والجسم والكوس والمناولات',
+          'عزل الفازات بشريط لحام',
+        ];
+        return actions as DeviceActions<T>[];
+      case 'لوحة':
+        actions = [
+          'تنظيف اللوحة',
+          'التربيط على الكوس والبارات',
+          'عزل الفازات بشريط لحام',
+          'تزويد فوم',
+          'إزالة عش',
+          'تغيير قواطع',
+          'تغيير ورد ومسامير',
+        ];
+        return actions as DeviceActions<T>[];
+      default:
+        return [] as DeviceActions<T>[];
+    }
+  };
   function actionsButtons<T extends DeviceType>(deviceType: T): JSX.Element {
-    const deviceActions: Array<DeviceActions<T>> = (() => {
-      switch (deviceType) {
-        case 'سكينة':
-          return [
-            'مسح العوازل',
-            'تشحيم السكينة',
-            'تعديل اللوبات',
-            'تغيير التشعيرات',
-          ] as DeviceActions<T>[];
-        case 'محول':
-          return [
-            'تنظيف الجسم والعوازل وجهاز السليكاجيل',
-            'التربيط على العوازل والجسم والكوس والمناولات',
-            'عزل الفازات بشريط لحام',
-          ] as DeviceActions<T>[];
-        case 'لوحة':
-          return [
-            'تنظيف اللوحة',
-            'التربيط على الكوس والبارات',
-            'عزل الفازات بشريط لحام',
-            'تزويد فوم',
-            'إزالة عش',
-            'تغيير قواطع',
-            'تغيير ورد ومسامير',
-          ] as DeviceActions<T>[];
-        default:
-          return [] as DeviceActions<T>[];
-      }
-    })();
+    const actions = deviceActions[deviceType] || [];
     return (
       <>
-        {deviceActions.map((action) => (
-          <TouchableOpacity style={styles.checkItem}>
-            <CheckCircle2 size={24} color="#2563eb" />
-            <Text style={styles.checkText}>{action}</Text>
+        {actions.map((actionItem, index) => (
+          <TouchableOpacity
+            key={`${deviceType}-${index}`}
+            style={styles.checkItem}
+            onPress={() => {
+              setDeviceActions((prev) => {
+                const updatedActions = [...(prev[deviceType] || [])] as Array<{
+                  action: DeviceActions<typeof deviceType>;
+                  isSelected: boolean;
+                }>;
+                updatedActions[index] = {
+                  ...updatedActions[index],
+                  isSelected: !updatedActions[index].isSelected,
+                };
+                return {
+                  ...prev,
+                  [deviceType]: updatedActions,
+                };
+              });
+            }}
+          >
+            <>
+              <View
+                style={[
+                  styles.checkCircleContainer,
+                  actionItem.isSelected && styles.SelectedCheckCircleContainer,
+                ]}
+              >
+                <CheckCircle2
+                  size={24}
+                  color={actionItem.isSelected ? '#ffffff' : '#2563eb'}
+                />
+              </View>
+              <Text style={styles.checkText}>{actionItem.action}</Text>
+            </>
           </TouchableOpacity>
         ))}
       </>
@@ -273,10 +328,24 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  checkCircleContainer: {
+    width: 26,
+    height: 26,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  SelectedCheckCircleContainer: {
+    backgroundColor: '#2563eb',
+  },
   checkItem: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
+    color: '#2563eb',
     gap: 12,
+  },
+  checkItemChecked: {
+    color: '#2563eb',
   },
   checkText: {
     fontFamily: 'Cairo-Regular',
