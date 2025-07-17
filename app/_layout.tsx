@@ -29,7 +29,7 @@ export default function RootLayout() {
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
     </Provider>
   );
 }

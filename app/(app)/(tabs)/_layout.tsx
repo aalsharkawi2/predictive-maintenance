@@ -6,7 +6,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: true,
-        tabBarStyle: { height: 60 },
+        tabBarStyle: { height: 100 },
         tabBarLabelStyle: { fontFamily: 'Cairo-Regular' },
         headerTitleStyle: { fontFamily: 'Cairo-Bold' },
       }}
