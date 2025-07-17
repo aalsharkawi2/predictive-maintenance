@@ -52,7 +52,7 @@ export default function DevicesScreen() {
         <Text style={styles.sectionTitle}>معرف ال{type}</Text>
         <TextInput
           style={styles.input}
-          placeholder={type === 'جهاز' ? 'ص/ع/1/ق/1/ج/1' : 'مغذي J105'}
+          placeholder={type === 'جهاز' ? 'ص/ع/1/ق/1/ج/1' : 'J105 مغذي'}
           value={deviceId}
           onChangeText={setDeviceId}
           textAlign="right"
@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    textAlign: 'right',
   },
   typeButtons: {
     flexDirection: 'row',

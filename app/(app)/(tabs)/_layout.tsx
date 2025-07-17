@@ -1,14 +1,20 @@
 import { Tabs } from 'expo-router';
 import { ClipboardList, Settings, Home, History } from 'lucide-react-native';
+import { I18nManager } from 'react-native';
+
+if (!I18nManager.isRTL) {
+  I18nManager.forceRTL(true);
+}
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: true,
-        tabBarStyle: { height: 100 },
+        tabBarStyle: { height: 100, direction: 'rtl' },
         tabBarLabelStyle: { fontFamily: 'Cairo-Regular' },
         headerTitleStyle: { fontFamily: 'Cairo-Bold' },
+        headerTitleAlign: 'center',
       }}
     >
       <Tabs.Screen
