@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
     MaintenanceType,
     DeviceType,
@@ -43,7 +43,7 @@ function getDeviceActions<T extends DeviceType>(deviceType: T): ActionItem<T>[] 
 }
 
 export function useMaintenanceState() {
-    const [state, setState] = useState<MaintenanceState>({
+    const [state, setState] = useState<MaintenanceState>(() => ({
         deviceId: '',
         selectedMaintenanceType: null,
         selectedDeviceType: null,
@@ -51,23 +51,27 @@ export function useMaintenanceState() {
             'سكينة': getDeviceActions('سكينة'),
             'محول': getDeviceActions('محول'),
             'لوحة': getDeviceActions('لوحة'),
-        }
-    });
+        },
+    }));
 
 
-    const setDeviceId = (id: string) => {
-        setState(prev => ({ ...prev, deviceId: id }));
-    };
+    const setDeviceId = useCallback((id: string) => {
+        setState(prev => (prev.deviceId === id ? prev : { ...prev, deviceId: id }));
+    }, []);
 
-    const setMaintenanceType = (type: MaintenanceType) => {
-        setState(prev => ({ ...prev, selectedMaintenanceType: type }));
-    };
+    const setMaintenanceType = useCallback((type: MaintenanceType) => {
+        setState(prev =>
+            prev.selectedMaintenanceType === type ? prev : { ...prev, selectedMaintenanceType: type }
+        );
+    }, []);
 
-    const setDeviceType = (type: DeviceType) => {
-        setState(prev => ({ ...prev, selectedDeviceType: type }));
-    };
+    const setDeviceType = useCallback((type: DeviceType) => {
+        setState(prev =>
+            prev.selectedDeviceType === type ? prev : { ...prev, selectedDeviceType: type }
+        );
+    }, []);
 
-    const toggleAction = <T extends DeviceType>(deviceType: T, actionIndex: number) => {
+    const toggleAction = useCallback(<T extends DeviceType>(deviceType: T, actionIndex: number) => {
         setState(prev => {
             const deviceActionsCopy = { ...prev.deviceActions };
             if (!deviceActionsCopy[deviceType]) return prev;
@@ -84,9 +88,9 @@ export function useMaintenanceState() {
                     ...deviceActionsCopy,
                     [deviceType]: updatedActions,
                 },
-            } as MaintenanceState;
+            };
         });
-    };
+    }, []);
 
     return {
         state,
