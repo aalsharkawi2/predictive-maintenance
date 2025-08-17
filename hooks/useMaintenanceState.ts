@@ -2,14 +2,15 @@ import { useState } from 'react';
 import {
     MaintenanceType,
     DeviceType,
+    DeviceActions,
     ActionItem,
     MaintenanceState
-} from '../types/maintenance';
+} from '@/types/maintenance';
 
 const maintenanceTypes: MaintenanceType[] = ['نهاية', 'جهاز'];
 const deviceTypes: DeviceType[] = ['سكينة', 'محول', 'لوحة'];
 
-const rawDeviceActions: Record<DeviceType, string[]> = {
+const rawDeviceActions: { [K in DeviceType]: DeviceActions<K>[] } = {
     'سكينة': [
         'مسح العوازل',
         'تشحيم السكينة',
@@ -33,11 +34,12 @@ const rawDeviceActions: Record<DeviceType, string[]> = {
 };
 
 function getDeviceActions<T extends DeviceType>(deviceType: T): ActionItem<T>[] {
-    const actions = rawDeviceActions[deviceType] || [];
+    const actions = rawDeviceActions[deviceType];
+    if (!actions) throw new Error(`Missing actions for device type: ${deviceType}`);
     return actions.map(action => ({
         action,
         isSelected: false,
-    })) as ActionItem<T>[];
+    }));
 }
 
 export function useMaintenanceState() {
