@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { shadowStyles } from '../styles/common';
+import { shadowStyles } from '@/styles/common';
 
 interface TypeSelectorProps<T extends string> {
   title: string;
@@ -9,11 +9,11 @@ interface TypeSelectorProps<T extends string> {
   onSelect: (option: T) => void;
 }
 
-export function TypeSelector<T extends string>({ 
-  title, 
-  options, 
-  selectedOption, 
-  onSelect 
+export function TypeSelector<T extends string>({
+  title,
+  options,
+  selectedOption,
+  onSelect,
 }: TypeSelectorProps<T>) {
   return (
     <View style={styles.section}>
