@@ -73,19 +73,17 @@ export function useMaintenanceState() {
 
     const toggleAction = useCallback(<T extends DeviceType>(deviceType: T, actionIndex: number) => {
         setState(prev => {
-            const deviceActionsCopy = { ...prev.deviceActions };
-            if (!deviceActionsCopy[deviceType]) return prev;
+            const currentActions = prev.deviceActions[deviceType];
+            if (actionIndex < 0 || actionIndex >= currentActions.length) return prev;
 
-            const updatedActions = [...deviceActionsCopy[deviceType]!];
-            updatedActions[actionIndex] = {
-                ...updatedActions[actionIndex],
-                isSelected: !updatedActions[actionIndex].isSelected,
-            };
+            const updatedActions = currentActions.map((item, i) =>
+                i === actionIndex ? { ...item, isSelected: !item.isSelected } : item
+            );
 
             return {
                 ...prev,
                 deviceActions: {
-                    ...deviceActionsCopy,
+                    ...prev.deviceActions,
                     [deviceType]: updatedActions,
                 },
             };

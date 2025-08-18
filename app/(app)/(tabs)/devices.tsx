@@ -40,19 +40,20 @@ export default function DevicesScreen() {
   );
 
   const renderActionsList = () => {
-    if (!state.selectedDeviceType) return null;
+    const deviceType = state.selectedDeviceType;
+    if (!deviceType) return null;
 
-    const actions = state.deviceActions[state.selectedDeviceType] || [];
+    const actions = state.deviceActions[deviceType];
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
         <View style={styles.checklist}>
           {actions.map((actionItem, index) => (
             <ActionCheckItem
-              key={`${state.selectedDeviceType}-${index}`}
+              key={`${deviceType}-${index}`}
               label={actionItem.action}
               isSelected={actionItem.isSelected}
-              onToggle={() => toggleAction(state.selectedDeviceType!, index)}
+              onToggle={() => toggleAction(deviceType, index)}
             />
           ))}
         </View>
