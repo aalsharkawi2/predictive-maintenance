@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { shadowStyles } from '@/styles/common';
+import { TypeButtons } from './TypeButtons';
 
 interface TypeSelectorProps<T extends string> {
   title: string;
@@ -18,30 +19,11 @@ export function TypeSelector<T extends string>({
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.typeButtons}>
-        {options.map((option) => (
-          <TouchableOpacity
-            key={option}
-            style={[
-              styles.typeButton,
-              selectedOption === option && styles.selectedType,
-            ]}
-            onPress={() => onSelect(option)}
-            accessibilityRole="button"
-            accessibilityLabel={option}
-            accessibilityState={{ selected: selectedOption === option }}
-          >
-            <Text
-              style={[
-                styles.typeText,
-                selectedOption === option && styles.selectedTypeText,
-              ]}
-            >
-              {option}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <TypeButtons
+        options={options}
+        selectedOption={selectedOption}
+        onSelect={onSelect}
+      />
     </View>
   );
 }

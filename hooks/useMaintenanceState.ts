@@ -1,14 +1,16 @@
 import { useState, useCallback } from 'react';
 import {
     MaintenanceType,
+    ColumnType,
     DeviceType,
     DeviceActions,
     ActionItem,
     MaintenanceState
 } from '@/types/maintenance';
 
-const maintenanceTypes: MaintenanceType[] = ['نهاية', 'جهاز'];
-const deviceTypes: DeviceType[] = ['سكينة', 'محول', 'لوحة'];
+export const maintenanceTypes: MaintenanceType[] = ['نهاية', 'جهاز'];
+export const columnTypes: ColumnType[] = ['رعد', 'ع', 'ص'];
+export const deviceTypes: DeviceType[] = ['سكينة', 'محول', 'لوحة'];
 
 const rawDeviceActions: { [K in DeviceType]: DeviceActions<K>[] } = {
     'سكينة': [
@@ -44,6 +46,7 @@ function getDeviceActions<T extends DeviceType>(deviceType: T): ActionItem<T>[] 
 
 export function useMaintenanceState() {
     const [state, setState] = useState<MaintenanceState>(() => ({
+        selectedColumnType: null,
         deviceId: '',
         selectedMaintenanceType: null,
         selectedDeviceType: null,
@@ -54,6 +57,9 @@ export function useMaintenanceState() {
         },
     }));
 
+    const setColumnType = useCallback((type: ColumnType) => {
+        setState(prev => (prev.selectedColumnType === type ? prev : { ...prev, selectedColumnType: type }));
+    }, []);
 
     const setDeviceId = useCallback((id: string) => {
         setState(prev => (prev.deviceId === id ? prev : { ...prev, deviceId: id }));
@@ -93,7 +99,9 @@ export function useMaintenanceState() {
     return {
         state,
         maintenanceTypes,
+        columnTypes,
         deviceTypes,
+        setColumnType,
         setDeviceId,
         setMaintenanceType,
         setDeviceType,

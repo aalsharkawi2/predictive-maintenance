@@ -6,19 +6,23 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { Camera } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
 import { TypeSelector } from '@/components/TypeSelector';
 import { ActionCheckItem } from '@/components/ActionCheckItem';
-import { MaintenanceType, DeviceType } from '@/types/maintenance';
+import { Identifier } from '@/components/Identifier';
+import { MaintenanceType } from '@/types/maintenance';
 import { shadowStyles } from '@/styles/common';
 
 export default function DevicesScreen() {
   const {
     state,
     maintenanceTypes,
+    columnTypes,
     deviceTypes,
+    setColumnType,
     setDeviceId,
     setMaintenanceType,
     setDeviceType,
@@ -28,13 +32,11 @@ export default function DevicesScreen() {
   const renderIdentifier = (type: MaintenanceType) => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>معرف ال{type}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={type === 'جهاز' ? 'ص/ع/1/ق/1/ج/1' : 'J105 مغذي'}
-        value={state.deviceId}
-        onChangeText={setDeviceId}
-        textAlign="right"
-        accessibilityLabel={`معرف ال${type}`}
+      <Identifier
+        type={type}
+        state={state}
+        setColumnType={setColumnType}
+        setDeviceId={setDeviceId}
       />
     </View>
   );
@@ -93,7 +95,7 @@ export default function DevicesScreen() {
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
                 <TextInput
-                  style={styles.input}
+                  style={shadowStyles.input}
                   placeholder="placeholder"
                   textAlign="right"
                   accessibilityLabel="الإجراءات المتخذة"
@@ -142,15 +144,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Cairo-Bold',
     color: '#1f2937',
-    textAlign: 'right',
-  },
-  input: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    fontFamily: 'Cairo-Regular',
-    fontSize: 16,
-    ...shadowStyles.card,
     textAlign: 'right',
   },
   checklist: {
