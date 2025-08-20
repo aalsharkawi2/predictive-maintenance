@@ -1,6 +1,5 @@
 export type MaintenanceType = 'نهاية' | 'جهاز';
 export type ColumnType = 'ص' | 'ع' | 'رعد';
-export type IdentifierLitrals = number | string;
 export type DeviceType = 'سكينة' | 'محول' | 'لوحة';
 export type DisconnectingSwitchAction =
     | 'مسح العوازل'
@@ -35,6 +34,9 @@ export interface ActionItem<T extends DeviceType> {
 
 export interface MaintenanceState {
     selectedColumnType: ColumnType | null;
+    columnNum: number | null;
+    area: number | string | null;
+    deviceNum: number | null;
     deviceId: string;
     selectedMaintenanceType: MaintenanceType | null;
     selectedDeviceType: DeviceType | null;

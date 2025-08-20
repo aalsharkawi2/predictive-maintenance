@@ -23,11 +23,22 @@ export default function DevicesScreen() {
     columnTypes,
     deviceTypes,
     setColumnType,
+    setColumnNum,
+    setArea,
+    setDeviceNum,
     setDeviceId,
     setMaintenanceType,
     setDeviceType,
     toggleAction,
   } = useMaintenanceState();
+
+  const identifierHelperFn = {
+    setColumnType,
+    setColumnNum,
+    setArea,
+    setDeviceNum,
+    setDeviceId,
+  };
 
   const renderIdentifier = (type: MaintenanceType) => (
     <View style={styles.section}>

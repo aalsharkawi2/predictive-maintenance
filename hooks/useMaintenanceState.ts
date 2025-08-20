@@ -47,6 +47,9 @@ function getDeviceActions<T extends DeviceType>(deviceType: T): ActionItem<T>[] 
 export function useMaintenanceState() {
     const [state, setState] = useState<MaintenanceState>(() => ({
         selectedColumnType: null,
+        columnNum: null,
+        area: null,
+        deviceNum: null,
         deviceId: '',
         selectedMaintenanceType: null,
         selectedDeviceType: null,
@@ -59,6 +62,18 @@ export function useMaintenanceState() {
 
     const setColumnType = useCallback((type: ColumnType) => {
         setState(prev => (prev.selectedColumnType === type ? prev : { ...prev, selectedColumnType: type }));
+    }, []);
+
+    const setColumnNum = useCallback((num: number) => {
+        setState(prev => (prev.columnNum === num ? prev : { ...prev, columnNum: num }));
+    }, []);
+
+    const setArea = useCallback((num: number | string) => {
+        setState(prev => (prev.area === num ? prev : { ...prev, area: num }));
+    }, []);
+
+    const setDeviceNum = useCallback((num: number) => {
+        setState(prev => (prev.deviceNum === num ? prev : { ...prev, deviceNum: num }));
     }, []);
 
     const setDeviceId = useCallback((id: string) => {
@@ -102,6 +117,9 @@ export function useMaintenanceState() {
         columnTypes,
         deviceTypes,
         setColumnType,
+        setColumnNum,
+        setArea,
+        setDeviceNum,
         setDeviceId,
         setMaintenanceType,
         setDeviceType,

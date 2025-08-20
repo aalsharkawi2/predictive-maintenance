@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -14,18 +14,24 @@ import { columnTypes } from '@/hooks/useMaintenanceState';
 interface IdentifierProps {
   type: string;
   state: MaintenanceState;
-  setColumnType: (option: ColumnType) => void;
-  setDeviceId: (option: string) => void;
+  identifierHelperFn: {
+    setColumnType: (option: ColumnType) => void;
+    setColumnNum: (num: string) => void;
+    setArea: (area: string | number) => void;
+    setDeviceNum: (num: string) => void;
+    setDeviceId: (id: string) => void;
+  };
 }
 
 export function Identifier({
   type,
   state,
-  setColumnType,
-  setDeviceId,
+  identifierHelperFn,
 }: IdentifierProps) {
   const { width } = useWindowDimensions();
   const isNarrow = width < 420;
+  const secondTextInputRef = useRef<TextInput>(null);
+  const thirdTextInputRef = useRef<TextInput>(null);
 
   return type === 'جهاز' ? (
     <View style={[styles.identifier, isNarrow && styles.identifierNarrow]}>
@@ -39,7 +45,7 @@ export function Identifier({
         <TypeButtons
           options={columnTypes}
           selectedOption={state.selectedColumnType}
-          onSelect={setColumnType}
+          onSelect={identifierHelperFn.setColumnType}
         />
       </View>
       {state.selectedColumnType && (
@@ -56,7 +62,13 @@ export function Identifier({
               placeholder={'ع'}
               value={state.deviceId}
               keyboardType="number-pad"
-              onChangeText={setDeviceId}
+              maxLength={1}
+              onChangeText={(text) => {
+                identifierHelperFn.setDeviceId(text);
+                if (secondTextInputRef.current) {
+                  secondTextInputRef.current.focus();
+                }
+              }}
               textAlign="right"
               accessibilityLabel={`رقم العمود`}
             />
@@ -70,7 +82,14 @@ export function Identifier({
               keyboardType={
                 !(state.selectedColumnType === 'رعد') ? 'number-pad' : undefined
               }
-              onChangeText={setDeviceId}
+              maxLength={1}
+              ref={secondTextInputRef}
+              onChangeText={(text) => {
+                identifierHelperFn.setDeviceId(text);
+                if (thirdTextInputRef.current) {
+                  thirdTextInputRef.current.focus();
+                }
+              }}
               textAlign="right"
               accessibilityLabel={`رقم القطعة`}
             />
@@ -82,7 +101,9 @@ export function Identifier({
               placeholder={'ج'}
               value={state.deviceId}
               keyboardType="number-pad"
-              onChangeText={setDeviceId}
+              maxLength={1}
+              ref={thirdTextInputRef}
+              onChangeText={identifierHelperFn.setDeviceId}
               textAlign="right"
               accessibilityLabel={`رقم الجهاز`}
             />
@@ -95,7 +116,7 @@ export function Identifier({
       style={shadowStyles.input}
       placeholder={'J105 مثال: مغذي'}
       value={state.deviceId}
-      onChangeText={setDeviceId}
+      onChangeText={identifierHelperFn.setDeviceId}
       textAlign="right"
       accessibilityLabel={`معرف ال${type}`}
     />
