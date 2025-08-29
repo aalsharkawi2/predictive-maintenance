@@ -16,9 +16,9 @@ interface IdentifierProps {
   state: MaintenanceState;
   identifierHelperFn: {
     setColumnType: (option: ColumnType) => void;
-    setColumnNum: (num: string) => void;
+    setColumnNum: (num: number) => void;
     setArea: (area: string | number) => void;
-    setDeviceNum: (num: string) => void;
+    setDeviceNum: (num: number) => void;
     setDeviceId: (id: string) => void;
   };
 }

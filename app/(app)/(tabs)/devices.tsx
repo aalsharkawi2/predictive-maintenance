@@ -46,8 +46,7 @@ export default function DevicesScreen() {
       <Identifier
         type={type}
         state={state}
-        setColumnType={setColumnType}
-        setDeviceId={setDeviceId}
+        identifierHelperFn={identifierHelperFn}
       />
     </View>
   );
