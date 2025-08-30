@@ -34,9 +34,9 @@ export interface ActionItem<T extends DeviceType> {
 
 export interface MaintenanceState {
     selectedColumnType: ColumnType | null;
-    columnNum: number | null;
-    area: number | string | null;
-    deviceNum: number | null;
+    columnNum: number | '';
+    area: number | string;
+    deviceNum: number | '';
     deviceId: string;
     selectedMaintenanceType: MaintenanceType | null;
     selectedDeviceType: DeviceType | null;
