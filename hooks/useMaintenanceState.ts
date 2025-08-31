@@ -65,15 +65,15 @@ export function useMaintenanceState() {
     }, []);
 
     const setColumnNum = useCallback((num: number | '') => {
-        setState(prev => (prev.columnNum === num ? prev : { ...prev, columnNum: num }));
+        setState(prev => ({ ...prev, columnNum: num }));
     }, []);
 
     const setArea = useCallback((num: number | string) => {
-        setState(prev => (prev.area === num ? prev : { ...prev, area: num }));
+        setState(prev => ({ ...prev, area: num }));
     }, []);
 
     const setDeviceNum = useCallback((num: number | '') => {
-        setState(prev => (prev.deviceNum === num ? prev : { ...prev, deviceNum: num }));
+        setState(prev => ({ ...prev, deviceNum: num }));
     }, []);
 
     const setDeviceId = useCallback((id: string) => {

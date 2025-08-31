@@ -5,6 +5,7 @@ import {
   useWindowDimensions,
   View,
   Text,
+  Keyboard,
 } from 'react-native';
 import { shadowStyles } from '@/styles/common';
 import { ColumnType, MaintenanceState } from '@/types/maintenance';
@@ -32,12 +33,15 @@ export function Identifier({
   const isNarrow = width < 420;
   const secondTextInputRef = useRef<TextInput>(null);
   const thirdTextInputRef = useRef<TextInput>(null);
+  const isArabicLetter = (ch: string) =>
+    /^[\u0621-\u063A\u0641-\u064A]$/u.test(ch);
+  /*
   useEffect(() => {
     identifierHelperFn.setDeviceId(
-      `${state.selectedColumnType}-${state.columnNum}-${state.area}-${state.deviceNum}`,
+      `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
     );
   }, [state.selectedColumnType, state.columnNum, state.area, state.deviceNum]);
-
+*/
   return type === 'جهاز' ? (
     <View style={[styles.identifier, isNarrow && styles.identifierNarrow]}>
       <View
@@ -50,7 +54,12 @@ export function Identifier({
         <TypeButtons
           options={columnTypes}
           selectedOption={state.selectedColumnType}
-          onSelect={identifierHelperFn.setColumnType}
+          onSelect={(selection) => {
+            identifierHelperFn.setColumnType(selection);
+            identifierHelperFn.setColumnNum('');
+            identifierHelperFn.setArea('');
+            identifierHelperFn.setDeviceNum('');
+          }}
         />
       </View>
       {state.selectedColumnType && (
@@ -68,16 +77,29 @@ export function Identifier({
               value={!state.columnNum ? '' : `${state.columnNum}`}
               keyboardType="number-pad"
               maxLength={1}
-              onChangeText={(text) => {
-                const next = state.area;
-                const prev = state.columnNum;
-                if (text === '0') {
+              onKeyPress={({ nativeEvent: { key } }) => {
+                if (
+                  key === 'Backspace' ||
+                  !Number(key) ||
+                  key === '0' ||
+                  state.columnNum === 0
+                ) {
                   identifierHelperFn.setColumnNum('');
-                } else {
-                  identifierHelperFn.setColumnNum(Number(text));
+                  return;
                 }
-                if (secondTextInputRef.current && !next && !prev) {
-                  secondTextInputRef.current.focus();
+                identifierHelperFn.setColumnNum(Number(key));
+                if (
+                  !!state.selectedColumnType &&
+                  !!state.columnNum &&
+                  !!state.area &&
+                  !!state.deviceNum
+                ) {
+                  identifierHelperFn.setDeviceId(
+                    `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
+                  );
+                }
+                if (secondTextInputRef.current) {
+                  setTimeout(() => secondTextInputRef.current?.focus(), 0);
                 }
               }}
               textAlign="right"
@@ -95,12 +117,31 @@ export function Identifier({
               }
               maxLength={1}
               ref={secondTextInputRef}
-              onChangeText={(text) => {
-                const next = state.deviceNum;
-                const prev = state.area;
-                identifierHelperFn.setArea(text);
-                if (thirdTextInputRef.current && !next && !prev) {
-                  thirdTextInputRef.current.focus();
+              onKeyPress={({ nativeEvent: { key } }) => {
+                if (
+                  key === 'Backspace' ||
+                  key === '0' ||
+                  (state.selectedColumnType === 'رعد'
+                    ? !(Number(key) || isArabicLetter(key))
+                    : !Number(key)) ||
+                  state.area === 0
+                ) {
+                  identifierHelperFn.setArea('');
+                  return;
+                }
+                identifierHelperFn.setArea(key);
+                if (
+                  !!state.selectedColumnType &&
+                  !!state.columnNum &&
+                  !!state.area &&
+                  !!state.deviceNum
+                ) {
+                  identifierHelperFn.setDeviceId(
+                    `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
+                  );
+                }
+                if (thirdTextInputRef.current) {
+                  setTimeout(() => thirdTextInputRef.current?.focus(), 0);
                 }
               }}
               textAlign="right"
@@ -116,12 +157,32 @@ export function Identifier({
               keyboardType="number-pad"
               maxLength={1}
               ref={thirdTextInputRef}
-              onChangeText={(text) => {
-                if (text === '0') {
+              onKeyPress={({ nativeEvent: { key } }) => {
+                if (
+                  key === 'Backspace' ||
+                  !Number(key) ||
+                  key === '0' ||
+                  state.deviceNum === 0
+                ) {
                   identifierHelperFn.setDeviceNum('');
-                } else {
-                  identifierHelperFn.setDeviceNum(Number(text));
+                  return;
                 }
+                const deviceNum = Number(key);
+                identifierHelperFn.setDeviceNum(deviceNum);
+                if (
+                  !!state.selectedColumnType &&
+                  !!state.columnNum &&
+                  !!state.area &&
+                  !!deviceNum
+                ) {
+                  identifierHelperFn.setDeviceId(
+                    `${state.selectedColumnType} ${state.columnNum}/${state.area}/${deviceNum}`,
+                  );
+                }
+                setTimeout(() => {
+                  thirdTextInputRef.current?.blur();
+                  Keyboard.dismiss();
+                }, 0);
               }}
               textAlign="right"
               accessibilityLabel={`رقم الجهاز`}
