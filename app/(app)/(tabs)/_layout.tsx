@@ -3,7 +3,7 @@ import { ClipboardList, Settings, Home, History } from 'lucide-react-native';
 import { I18nManager } from 'react-native';
 
 if (!I18nManager.isRTL) {
-  I18nManager.forceRTL(true);
+  I18nManager.forceRTL(false);
 }
 
 export default function TabLayout() {

@@ -33,5 +33,7 @@ export const shadowStyles = StyleSheet.create({
     fontSize: 16,
     ...cardShadow,
     textAlign: 'right',
+    flexGrow: 1,
+    flexBasis: 1,
   },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { Camera } from 'lucide-react-native';
+import { Camera, PlusCircle } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
 import { TypeSelector } from '@/components/TypeSelector';
 import { ActionCheckItem } from '@/components/ActionCheckItem';
@@ -30,6 +30,7 @@ export default function DevicesScreen() {
     setMaintenanceType,
     setDeviceType,
     toggleAction,
+    setDeviceNote,
   } = useMaintenanceState();
 
   const identifierHelperFn = {
@@ -39,6 +40,8 @@ export default function DevicesScreen() {
     setDeviceNum,
     setDeviceId,
   };
+
+  const [note, setNote] = useState<string>('');
 
   const renderIdentifier = (type: MaintenanceType) => (
     <View style={styles.section}>
@@ -51,6 +54,8 @@ export default function DevicesScreen() {
     </View>
   );
 
+  const [notesHeight, setNotesHeight] = useState(44);
+
   const renderActionsList = () => {
     let deviceType;
     if (!state.deviceId) {
@@ -61,6 +66,8 @@ export default function DevicesScreen() {
     if (!deviceType) return null;
 
     const actions = state.deviceActions[deviceType];
+    const notes = state.deviceNotes[deviceType];
+
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
@@ -73,6 +80,39 @@ export default function DevicesScreen() {
               onToggle={() => toggleAction(deviceType, index)}
             />
           ))}
+          {notes.map((note) => (
+            <Text>ملاحظة: {note}</Text>
+          ))}
+        </View>
+        <View style={styles.addActionItem}>
+          <TextInput
+            style={[
+              shadowStyles.input,
+              styles.notesInput,
+              { height: Math.max(55, notesHeight) },
+            ]}
+            onChangeText={setNote}
+            placeholder="أضف ملاحظات"
+            textAlign="right"
+            accessibilityLabel="ملاحظات"
+            multiline
+            scrollEnabled={true}
+            onContentSizeChange={(e) => {
+              setNotesHeight(e.nativeEvent.contentSize.height);
+            }}
+            textAlignVertical="top"
+          />
+          <TouchableOpacity
+            style={styles.genericButton}
+            onPress={() =>
+              state.selectedDeviceType &&
+              setDeviceNote(state.selectedDeviceType, note)
+            }
+            accessibilityRole="button"
+            accessibilityLabel="إضافة ملاحظة"
+          >
+            <PlusCircle size={24} color="#ffffff" />
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -123,7 +163,7 @@ export default function DevicesScreen() {
             {/* Camera Button */}
             {!!state.deviceId && (
               <TouchableOpacity
-                style={styles.photoButton}
+                style={styles.genericButton}
                 accessibilityRole="button"
                 accessibilityLabel="التقاط صورة"
               >
@@ -179,7 +219,17 @@ const styles = StyleSheet.create({
     gap: 16,
     ...shadowStyles.card,
   },
-  photoButton: {
+  addActionItem: {
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  notesInput: {
+    minHeight: 44,
+    maxHeight: 160,
+  },
+  genericButton: {
     backgroundColor: '#2563eb',
     flexDirection: 'row',
     gap: 8,

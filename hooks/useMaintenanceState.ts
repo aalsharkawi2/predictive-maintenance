@@ -35,6 +35,15 @@ const rawDeviceActions: { [K in DeviceType]: DeviceActions<K>[] } = {
     ],
 };
 
+const deviceNotes: { [K in DeviceType]: string[] } = {
+    'سكينة': [
+    ],
+    'محول': [
+    ],
+    'لوحة': [
+    ],
+};
+
 function getDeviceActions<T extends DeviceType>(deviceType: T): ActionItem<T>[] {
     const actions = rawDeviceActions[deviceType];
     if (!actions) throw new Error(`Missing actions for device type: ${deviceType}`);
@@ -58,6 +67,7 @@ export function useMaintenanceState() {
             'محول': getDeviceActions('محول'),
             'لوحة': getDeviceActions('لوحة'),
         },
+        deviceNotes,
     }));
 
     const setColumnType = useCallback((type: ColumnType) => {
@@ -111,6 +121,19 @@ export function useMaintenanceState() {
         });
     }, []);
 
+    const setDeviceNote = useCallback(<T extends DeviceType>(deviceType: T, note: string) => {
+        setState(prev => {
+            const Notes = prev.deviceNotes[deviceType];
+            note.trim() ? Notes.push(note) : Notes;
+            return {
+                ...prev,
+                deviceNotes: {
+                    ...prev.deviceNotes, [deviceType]: Notes,
+                },
+            };
+        });
+    }, []);
+
     return {
         state,
         maintenanceTypes,
@@ -124,5 +147,6 @@ export function useMaintenanceState() {
         setMaintenanceType,
         setDeviceType,
         toggleAction,
+        setDeviceNote,
     };
 }

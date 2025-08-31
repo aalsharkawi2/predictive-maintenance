@@ -43,4 +43,5 @@ export interface MaintenanceState {
     deviceActions: {
         [key in DeviceType]: ActionItem<key>[];
     }
+    deviceNotes: { [key in DeviceType]: string[] };
 }
