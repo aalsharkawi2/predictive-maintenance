@@ -46,13 +46,13 @@ function getDeviceActions<T extends DeviceType>(deviceType: T): ActionItem<T>[] 
 
 export function useMaintenanceState() {
     const [state, setState] = useState<MaintenanceState>(() => ({
-        selectedColumnType: null,
+        selectedColumnType: 'ص',
         columnNum: '',
         area: '',
         deviceNum: '',
         deviceId: '',
-        selectedMaintenanceType: null,
-        selectedDeviceType: null,
+        selectedMaintenanceType: 'جهاز',
+        selectedDeviceType: 'لوحة',
         deviceActions: {
             'سكينة': getDeviceActions('سكينة'),
             'محول': getDeviceActions('محول'),

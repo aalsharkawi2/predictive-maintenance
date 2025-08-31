@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  useWindowDimensions,
+  SafeAreaView,
 } from 'react-native';
 import { Camera } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
@@ -52,7 +52,12 @@ export default function DevicesScreen() {
   );
 
   const renderActionsList = () => {
-    const deviceType = state.selectedDeviceType;
+    let deviceType;
+    if (!state.deviceId) {
+      deviceType = null;
+    } else {
+      deviceType = state.selectedDeviceType;
+    }
     if (!deviceType) return null;
 
     const actions = state.deviceActions[deviceType];
@@ -74,67 +79,71 @@ export default function DevicesScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {/* Maintenance Type Selector */}
-        <TypeSelector
-          title="نوع الصيانة"
-          options={maintenanceTypes}
-          selectedOption={state.selectedMaintenanceType}
-          onSelect={(type) => setMaintenanceType(type)}
-        />
-
-        {/* Identifier Input */}
-        {state.selectedMaintenanceType !== null &&
-          renderIdentifier(state.selectedMaintenanceType)}
-
-        {/* Device Type Selector (Only for 'جهاز' maintenance type) */}
-        {state.selectedMaintenanceType === 'جهاز' && (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content}>
+          {/* Maintenance Type Selector */}
           <TypeSelector
-            title="نوع المكون"
-            options={deviceTypes}
-            selectedOption={state.selectedDeviceType}
-            onSelect={(type) => setDeviceType(type)}
+            title="نوع الصيانة"
+            options={maintenanceTypes}
+            selectedOption={state.selectedMaintenanceType}
+            onSelect={(type) => setMaintenanceType(type)}
           />
-        )}
 
-        {/* Actions Checklist */}
-        {state.selectedMaintenanceType === 'جهاز'
-          ? state.selectedDeviceType !== null && renderActionsList()
-          : state.selectedMaintenanceType !== null && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
-                <TextInput
-                  style={shadowStyles.input}
-                  placeholder="placeholder"
-                  textAlign="right"
-                  accessibilityLabel="الإجراءات المتخذة"
-                />
-              </View>
+          {/* Identifier Input */}
+          {state.selectedMaintenanceType !== null &&
+            renderIdentifier(state.selectedMaintenanceType)}
+
+          {/* Device Type Selector (Only for 'جهاز' maintenance type) */}
+          {state.selectedMaintenanceType === 'جهاز' && !!state.deviceId && (
+            <TypeSelector
+              title="نوع المكون"
+              options={deviceTypes}
+              selectedOption={state.selectedDeviceType}
+              onSelect={(type) => setDeviceType(type)}
+            />
+          )}
+
+          {/* Actions Checklist */}
+          {state.selectedMaintenanceType === 'جهاز'
+            ? state.selectedDeviceType !== null && renderActionsList()
+            : state.selectedMaintenanceType !== null && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
+                  <TextInput
+                    style={shadowStyles.input}
+                    placeholder="placeholder"
+                    textAlign="right"
+                    accessibilityLabel="الإجراءات المتخذة"
+                  />
+                </View>
+              )}
+          <View style={styles.flexSpacer} />
+          <View style={styles.section}>
+            {/* Camera Button */}
+            {!!state.deviceId && (
+              <TouchableOpacity
+                style={styles.photoButton}
+                accessibilityRole="button"
+                accessibilityLabel="التقاط صورة"
+              >
+                <Camera size={24} color="#ffffff" />
+                <Text style={styles.photoButtonText}>التقاط صورة</Text>
+              </TouchableOpacity>
             )}
 
-        {/* Camera Button */}
-        {state.selectedDeviceType && (
-          <TouchableOpacity
-            style={styles.photoButton}
-            accessibilityRole="button"
-            accessibilityLabel="التقاط صورة"
-          >
-            <Camera size={24} color="#ffffff" />
-            <Text style={styles.photoButtonText}>التقاط صورة</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={styles.submitButton}
-          accessibilityRole="button"
-          accessibilityLabel="حفظ وإنهاء"
-        >
-          <Text style={styles.submitButtonText}>حفظ وإنهاء</Text>
-        </TouchableOpacity>
+            {/* Submit Button */}
+            <TouchableOpacity
+              style={styles.submitButton}
+              accessibilityRole="button"
+              accessibilityLabel="حفظ وإنهاء"
+            >
+              <Text style={styles.submitButtonText}>حفظ وإنهاء</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -143,9 +152,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  screen: {
+    flex: 1,
+  },
   content: {
     padding: 20,
     gap: 24,
+    flexGrow: 1,
+  },
+  flexSpacer: {
+    flexGrow: 1,
   },
   section: {
     gap: 12,

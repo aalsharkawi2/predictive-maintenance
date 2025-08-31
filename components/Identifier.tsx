@@ -31,17 +31,30 @@ export function Identifier({
 }: IdentifierProps) {
   const { width } = useWindowDimensions();
   const isNarrow = width < 420;
+  const firstTextInputRef = useRef<TextInput>(null);
   const secondTextInputRef = useRef<TextInput>(null);
   const thirdTextInputRef = useRef<TextInput>(null);
   const isArabicLetter = (ch: string) =>
     /^[\u0621-\u063A\u0641-\u064A]$/u.test(ch);
-  /*
+
   useEffect(() => {
-    identifierHelperFn.setDeviceId(
-      `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
-    );
-  }, [state.selectedColumnType, state.columnNum, state.area, state.deviceNum]);
-*/
+    if (
+      !!state.selectedColumnType &&
+      !!state.columnNum &&
+      !!state.area &&
+      !!state.deviceNum
+    ) {
+      identifierHelperFn.setDeviceId(
+        `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
+      );
+    }
+  }, [
+    state.selectedColumnType,
+    state.columnNum,
+    state.area,
+    state.deviceNum,
+    state.deviceId,
+  ]);
   return type === 'جهاز' ? (
     <View style={[styles.identifier, isNarrow && styles.identifierNarrow]}>
       <View
@@ -59,6 +72,10 @@ export function Identifier({
             identifierHelperFn.setColumnNum('');
             identifierHelperFn.setArea('');
             identifierHelperFn.setDeviceNum('');
+            identifierHelperFn.setDeviceId('');
+            if (firstTextInputRef.current) {
+              setTimeout(() => firstTextInputRef.current?.focus(), 0);
+            }
           }}
         />
       </View>
@@ -77,6 +94,7 @@ export function Identifier({
               value={!state.columnNum ? '' : `${state.columnNum}`}
               keyboardType="number-pad"
               maxLength={1}
+              ref={firstTextInputRef}
               onKeyPress={({ nativeEvent: { key } }) => {
                 if (
                   key === 'Backspace' ||
@@ -85,19 +103,11 @@ export function Identifier({
                   state.columnNum === 0
                 ) {
                   identifierHelperFn.setColumnNum('');
+                  identifierHelperFn.setDeviceId('');
                   return;
                 }
                 identifierHelperFn.setColumnNum(Number(key));
-                if (
-                  !!state.selectedColumnType &&
-                  !!state.columnNum &&
-                  !!state.area &&
-                  !!state.deviceNum
-                ) {
-                  identifierHelperFn.setDeviceId(
-                    `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
-                  );
-                }
+
                 if (secondTextInputRef.current) {
                   setTimeout(() => secondTextInputRef.current?.focus(), 0);
                 }
@@ -126,20 +136,20 @@ export function Identifier({
                     : !Number(key)) ||
                   state.area === 0
                 ) {
-                  identifierHelperFn.setArea('');
-                  return;
+                  if (state.area !== '') {
+                    identifierHelperFn.setArea('');
+                    identifierHelperFn.setDeviceId('');
+                    return;
+                  }
+                }
+                if (key === 'Backspace' && state.area === '') {
+                  if (firstTextInputRef.current) {
+                    setTimeout(() => firstTextInputRef.current?.focus(), 0);
+                    identifierHelperFn.setColumnNum('');
+                    return;
+                  }
                 }
                 identifierHelperFn.setArea(key);
-                if (
-                  !!state.selectedColumnType &&
-                  !!state.columnNum &&
-                  !!state.area &&
-                  !!state.deviceNum
-                ) {
-                  identifierHelperFn.setDeviceId(
-                    `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
-                  );
-                }
                 if (thirdTextInputRef.current) {
                   setTimeout(() => thirdTextInputRef.current?.focus(), 0);
                 }
@@ -164,21 +174,20 @@ export function Identifier({
                   key === '0' ||
                   state.deviceNum === 0
                 ) {
-                  identifierHelperFn.setDeviceNum('');
-                  return;
+                  if (state.deviceNum !== '') {
+                    identifierHelperFn.setDeviceNum('');
+                    identifierHelperFn.setDeviceId('');
+                    return;
+                  }
                 }
-                const deviceNum = Number(key);
-                identifierHelperFn.setDeviceNum(deviceNum);
-                if (
-                  !!state.selectedColumnType &&
-                  !!state.columnNum &&
-                  !!state.area &&
-                  !!deviceNum
-                ) {
-                  identifierHelperFn.setDeviceId(
-                    `${state.selectedColumnType} ${state.columnNum}/${state.area}/${deviceNum}`,
-                  );
+                if (key === 'Backspace' && state.deviceNum === '') {
+                  if (secondTextInputRef.current) {
+                    setTimeout(() => secondTextInputRef.current?.focus(), 0);
+                    identifierHelperFn.setArea('');
+                    return;
+                  }
                 }
+                identifierHelperFn.setDeviceNum(Number(key));
                 setTimeout(() => {
                   thirdTextInputRef.current?.blur();
                   Keyboard.dismiss();
