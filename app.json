@@ -29,8 +29,7 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.anonymous.predictivemaintenance",
-      "softwareKeyboardLayoutMode": "resize"
+      "package": "com.anonymous.predictivemaintenance"
     }
   }
 }

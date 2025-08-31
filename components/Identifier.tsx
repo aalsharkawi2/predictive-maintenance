@@ -136,19 +136,18 @@ export function Identifier({
                     : !Number(key)) ||
                   state.area === 0
                 ) {
-                  if (state.area !== '') {
-                    identifierHelperFn.setArea('');
-                    identifierHelperFn.setDeviceId('');
-                    return;
+                  if (key === 'Backspace' && state.area === '') {
+                    if (firstTextInputRef.current) {
+                      setTimeout(() => firstTextInputRef.current?.focus(), 0);
+                      identifierHelperFn.setColumnNum('');
+                      return;
+                    }
                   }
+                  identifierHelperFn.setArea('');
+                  identifierHelperFn.setDeviceId('');
+                  return;
                 }
-                if (key === 'Backspace' && state.area === '') {
-                  if (firstTextInputRef.current) {
-                    setTimeout(() => firstTextInputRef.current?.focus(), 0);
-                    identifierHelperFn.setColumnNum('');
-                    return;
-                  }
-                }
+
                 identifierHelperFn.setArea(key);
                 if (thirdTextInputRef.current) {
                   setTimeout(() => thirdTextInputRef.current?.focus(), 0);
@@ -174,19 +173,18 @@ export function Identifier({
                   key === '0' ||
                   state.deviceNum === 0
                 ) {
-                  if (state.deviceNum !== '') {
-                    identifierHelperFn.setDeviceNum('');
-                    identifierHelperFn.setDeviceId('');
-                    return;
+                  if (key === 'Backspace' && state.deviceNum === '') {
+                    if (secondTextInputRef.current) {
+                      setTimeout(() => secondTextInputRef.current?.focus(), 0);
+                      identifierHelperFn.setArea('');
+                      return;
+                    }
                   }
+                  identifierHelperFn.setDeviceNum('');
+                  identifierHelperFn.setDeviceId('');
+                  return;
                 }
-                if (key === 'Backspace' && state.deviceNum === '') {
-                  if (secondTextInputRef.current) {
-                    setTimeout(() => secondTextInputRef.current?.focus(), 0);
-                    identifierHelperFn.setArea('');
-                    return;
-                  }
-                }
+
                 identifierHelperFn.setDeviceNum(Number(key));
                 setTimeout(() => {
                   thirdTextInputRef.current?.blur();
