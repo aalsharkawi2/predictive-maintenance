@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,11 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  UIManager,
+  findNodeHandle,
 } from 'react-native';
 import { Camera, PlusCircle } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
@@ -42,6 +47,31 @@ export default function DevicesScreen() {
   };
 
   const [note, setNote] = useState<string>('');
+  const TextInputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollYRef = useRef(0);
+  const prevVisibleNotesHeightRef = useRef(56);
+  const scrollToNotesInput = () => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+    if (TextInputRef.current?.isFocused?.()) {
+      const inputHandle = findNodeHandle(TextInputRef.current);
+      const scrollHandle = findNodeHandle(scrollViewRef.current);
+      if (!inputHandle || !scrollHandle || !scrollViewRef.current) return;
+      UIManager.measureLayout(
+        inputHandle,
+        scrollHandle,
+        () => {},
+        (_x, y, _w, _h) => {
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, y - 16),
+            animated: true,
+          });
+        },
+      );
+    }
+  };
 
   const renderIdentifier = (type: MaintenanceType) => (
     <View style={styles.section}>
@@ -89,25 +119,59 @@ export default function DevicesScreen() {
             style={[
               shadowStyles.input,
               styles.notesInput,
-              { height: Math.max(55, notesHeight) },
+              Platform.OS === 'web'
+                ? null
+                : { height: Math.max(56, notesHeight) },
             ]}
             onChangeText={setNote}
+            value={note}
+            ref={TextInputRef}
             placeholder="أضف ملاحظات"
             textAlign="right"
             accessibilityLabel="ملاحظات"
             multiline
             scrollEnabled={true}
+            onFocus={() => {
+              // Delay to allow keyboard to start animating
+              setTimeout(scrollToNotesInput, 50);
+            }}
+            onLayout={() => {
+              setTimeout(scrollToNotesInput, 0);
+            }}
             onContentSizeChange={(e) => {
-              setNotesHeight(e.nativeEvent.contentSize.height);
+              if (Platform.OS === 'web') {
+                if (TextInputRef.current?.isFocused?.()) {
+                  setTimeout(scrollToNotesInput, 0);
+                }
+                return;
+              }
+              const newContentH = e.nativeEvent.contentSize.height;
+              setNotesHeight(newContentH);
+              const visibleH = Math.max(56, Math.min(newContentH, 160));
+              const delta = visibleH - prevVisibleNotesHeightRef.current;
+              if (delta > 0 && TextInputRef.current?.isFocused?.()) {
+                const currentY = scrollYRef.current || 0;
+                scrollViewRef.current?.scrollTo({
+                  y: currentY + delta,
+                  animated: false,
+                });
+              }
+              prevVisibleNotesHeightRef.current = visibleH;
             }}
             textAlignVertical="top"
           />
           <TouchableOpacity
             style={styles.genericButton}
-            onPress={() =>
-              state.selectedDeviceType &&
-              setDeviceNote(state.selectedDeviceType, note)
-            }
+            onPress={() => {
+              if (state.selectedDeviceType && note.trim()) {
+                setDeviceNote(state.selectedDeviceType, note.trim());
+                setNote('');
+                setNotesHeight(44);
+                prevVisibleNotesHeightRef.current = 56;
+                TextInputRef.current?.blur();
+                Keyboard.dismiss();
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="إضافة ملاحظة"
           >
@@ -120,8 +184,24 @@ export default function DevicesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode={
+            Platform.OS === 'ios' ? 'interactive' : 'on-drag'
+          }
+          onScroll={(e) => {
+            scrollYRef.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
+        >
           {/* Maintenance Type Selector */}
           <TypeSelector
             title="نوع الصيانة"
@@ -182,7 +262,7 @@ export default function DevicesScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -222,7 +302,7 @@ const styles = StyleSheet.create({
   addActionItem: {
     flexDirection: 'row',
     alignSelf: 'flex-end',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     gap: 12,
   },
   notesInput: {
