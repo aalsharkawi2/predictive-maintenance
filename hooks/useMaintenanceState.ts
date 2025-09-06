@@ -134,6 +134,20 @@ export function useMaintenanceState() {
         });
     }, []);
 
+    const deleteNote = useCallback(<T extends DeviceType>(deviceType: T, note: string) => {
+        setState(prev => {
+            const Notes = prev.deviceNotes[deviceType];
+            const deletedNoteIndex = Notes.findIndex((item) => note === item)
+            Notes.splice(deletedNoteIndex, 1);
+            return {
+                ...prev,
+                deviceNotes: {
+                    ...prev.deviceNotes, [deviceType]: Notes,
+                },
+            };
+        });
+    }, []);
+
     return {
         state,
         maintenanceTypes,
@@ -148,5 +162,6 @@ export function useMaintenanceState() {
         setDeviceType,
         toggleAction,
         setDeviceNote,
+        deleteNote,
     };
 }

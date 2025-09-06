@@ -17,6 +17,7 @@ import { Camera, PlusCircle } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
 import { TypeSelector } from '@/components/TypeSelector';
 import { ActionCheckItem } from '@/components/ActionCheckItem';
+import { NoteItem } from '@/components/NoteItem';
 import { Identifier } from '@/components/Identifier';
 import { MaintenanceType } from '@/types/maintenance';
 import { shadowStyles } from '@/styles/common';
@@ -36,6 +37,7 @@ export default function DevicesScreen() {
     setDeviceType,
     toggleAction,
     setDeviceNote,
+    deleteNote,
   } = useMaintenanceState();
 
   const identifierHelperFn = {
@@ -110,18 +112,22 @@ export default function DevicesScreen() {
               onToggle={() => toggleAction(deviceType, index)}
             />
           ))}
-          {notes.map((note) => (
-            <Text>ملاحظة: {note}</Text>
-          ))}
+          {notes.map(
+            (note) =>
+              state.selectedDeviceType && (
+                <NoteItem
+                  note={note}
+                  onDelete={() => deleteNote(deviceType, note)}
+                ></NoteItem>
+              ),
+          )}
         </View>
         <View style={styles.addActionItem}>
           <TextInput
             style={[
               shadowStyles.input,
               styles.notesInput,
-              Platform.OS === 'web'
-                ? null
-                : { height: Math.max(56, notesHeight) },
+              { height: Math.max(56, notesHeight) },
             ]}
             onChangeText={setNote}
             value={note}
@@ -132,7 +138,6 @@ export default function DevicesScreen() {
             multiline
             scrollEnabled={true}
             onFocus={() => {
-              // Delay to allow keyboard to start animating
               setTimeout(scrollToNotesInput, 50);
             }}
             onLayout={() => {
@@ -301,7 +306,7 @@ const styles = StyleSheet.create({
   },
   addActionItem: {
     flexDirection: 'row',
-    alignSelf: 'flex-end',
+    alignSelf: 'stretch',
     alignItems: 'flex-end',
     gap: 12,
   },
