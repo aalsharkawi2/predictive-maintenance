@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,10 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
-  UIManager,
-  findNodeHandle,
 } from 'react-native';
-import { Camera, PlusCircle } from 'lucide-react-native';
+import { Camera } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
 import { TypeSelector } from '@/components/TypeSelector';
 import { ActionCheckItem } from '@/components/ActionCheckItem';
@@ -21,12 +18,12 @@ import { NoteItem } from '@/components/NoteItem';
 import { Identifier } from '@/components/Identifier';
 import { MaintenanceType } from '@/types/maintenance';
 import { shadowStyles } from '@/styles/common';
+import { AddNote } from '@/components/AddNote';
 
 export default function DevicesScreen() {
   const {
     state,
     maintenanceTypes,
-    columnTypes,
     deviceTypes,
     setColumnType,
     setColumnNum,
@@ -48,32 +45,8 @@ export default function DevicesScreen() {
     setDeviceId,
   };
 
-  const [note, setNote] = useState<string>('');
-  const TextInputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollYRef = useRef(0);
-  const prevVisibleNotesHeightRef = useRef(56);
-  const scrollToNotesInput = () => {
-    if (Platform.OS === 'web') {
-      return;
-    }
-    if (TextInputRef.current?.isFocused?.()) {
-      const inputHandle = findNodeHandle(TextInputRef.current);
-      const scrollHandle = findNodeHandle(scrollViewRef.current);
-      if (!inputHandle || !scrollHandle || !scrollViewRef.current) return;
-      UIManager.measureLayout(
-        inputHandle,
-        scrollHandle,
-        () => {},
-        (_x, y, _w, _h) => {
-          scrollViewRef.current?.scrollTo({
-            y: Math.max(0, y - 16),
-            animated: true,
-          });
-        },
-      );
-    }
-  };
 
   const renderIdentifier = (type: MaintenanceType) => (
     <View style={styles.section}>
@@ -85,8 +58,6 @@ export default function DevicesScreen() {
       />
     </View>
   );
-
-  const [notesHeight, setNotesHeight] = useState(44);
 
   const renderActionsList = () => {
     let deviceType;
@@ -122,67 +93,10 @@ export default function DevicesScreen() {
               ),
           )}
         </View>
-        <View style={styles.addActionItem}>
-          <TextInput
-            style={[
-              shadowStyles.input,
-              styles.notesInput,
-              { height: Math.max(56, notesHeight) },
-            ]}
-            onChangeText={setNote}
-            value={note}
-            ref={TextInputRef}
-            placeholder="أضف ملاحظات"
-            textAlign="right"
-            accessibilityLabel="ملاحظات"
-            multiline
-            scrollEnabled={true}
-            onFocus={() => {
-              setTimeout(scrollToNotesInput, 50);
-            }}
-            onLayout={() => {
-              setTimeout(scrollToNotesInput, 0);
-            }}
-            onContentSizeChange={(e) => {
-              if (Platform.OS === 'web') {
-                if (TextInputRef.current?.isFocused?.()) {
-                  setTimeout(scrollToNotesInput, 0);
-                }
-                return;
-              }
-              const newContentH = e.nativeEvent.contentSize.height;
-              setNotesHeight(newContentH);
-              const visibleH = Math.max(56, Math.min(newContentH, 160));
-              const delta = visibleH - prevVisibleNotesHeightRef.current;
-              if (delta > 0 && TextInputRef.current?.isFocused?.()) {
-                const currentY = scrollYRef.current || 0;
-                scrollViewRef.current?.scrollTo({
-                  y: currentY + delta,
-                  animated: false,
-                });
-              }
-              prevVisibleNotesHeightRef.current = visibleH;
-            }}
-            textAlignVertical="top"
-          />
-          <TouchableOpacity
-            style={styles.genericButton}
-            onPress={() => {
-              if (state.selectedDeviceType && note.trim()) {
-                setDeviceNote(state.selectedDeviceType, note.trim());
-                setNote('');
-                setNotesHeight(44);
-                prevVisibleNotesHeightRef.current = 56;
-                TextInputRef.current?.blur();
-                Keyboard.dismiss();
-              }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="إضافة ملاحظة"
-          >
-            <PlusCircle size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
+        <AddNote
+          deviceType={deviceType}
+          setDeviceNote={setDeviceNote}
+        ></AddNote>
       </View>
     );
   };
@@ -303,16 +217,6 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
     ...shadowStyles.card,
-  },
-  addActionItem: {
-    flexDirection: 'row',
-    alignSelf: 'stretch',
-    alignItems: 'flex-end',
-    gap: 12,
-  },
-  notesInput: {
-    minHeight: 44,
-    maxHeight: 160,
   },
   genericButton: {
     backgroundColor: '#2563eb',
