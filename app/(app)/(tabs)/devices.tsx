@@ -96,6 +96,8 @@ export default function DevicesScreen() {
         <AddNote
           deviceType={deviceType}
           setDeviceNote={setDeviceNote}
+          scrollViewRef={scrollViewRef}
+          scrollYRef={scrollYRef}
         ></AddNote>
       </View>
     );
@@ -126,7 +128,10 @@ export default function DevicesScreen() {
             title="نوع الصيانة"
             options={maintenanceTypes}
             selectedOption={state.selectedMaintenanceType}
-            onSelect={(type) => setMaintenanceType(type)}
+            onSelect={(type) => {
+              setMaintenanceType(type);
+              setDeviceId('');
+            }}
           />
 
           {/* Identifier Input */}

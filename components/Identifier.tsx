@@ -45,7 +45,7 @@ export function Identifier({
       !!state.deviceNum
     ) {
       identifierHelperFn.setDeviceId(
-        `${state.selectedColumnType} ${state.columnNum}/${state.area}/${state.deviceNum}`,
+        `${state.selectedColumnType} ${state.deviceNum}/${state.area}/${state.columnNum}`,
       );
     }
   }, [
@@ -69,10 +69,6 @@ export function Identifier({
           selectedOption={state.selectedColumnType}
           onSelect={(selection) => {
             identifierHelperFn.setColumnType(selection);
-            identifierHelperFn.setColumnNum('');
-            identifierHelperFn.setArea('');
-            identifierHelperFn.setDeviceNum('');
-            identifierHelperFn.setDeviceId('');
             if (firstTextInputRef.current) {
               setTimeout(() => firstTextInputRef.current?.focus(), 0);
             }

@@ -71,7 +71,20 @@ export function useMaintenanceState() {
     }));
 
     const setColumnType = useCallback((type: ColumnType) => {
-        setState(prev => (prev.selectedColumnType === type ? prev : { ...prev, selectedColumnType: type }));
+        setState(prev => (prev.selectedColumnType === type ? prev : {
+            ...prev, selectedColumnType: type, deviceId: '', columnNum: '', area: '', deviceNum: '', selectedDeviceType: 'لوحة', deviceActions: {
+                'سكينة': getDeviceActions('سكينة'),
+                'محول': getDeviceActions('محول'),
+                'لوحة': getDeviceActions('لوحة'),
+            }, deviceNotes: {
+                'سكينة': [
+                ],
+                'محول': [
+                ],
+                'لوحة': [
+                ],
+            }
+        }));
     }, []);
 
     const setColumnNum = useCallback((num: number | '') => {
@@ -92,8 +105,9 @@ export function useMaintenanceState() {
 
     const setMaintenanceType = useCallback((type: MaintenanceType) => {
         setState(prev =>
-            prev.selectedMaintenanceType === type ? prev : { ...prev, selectedMaintenanceType: type }
+            prev.selectedMaintenanceType === type ? prev : { ...prev, selectedMaintenanceType: type, deviceId: '', selectedColumnType: null }
         );
+        state.selectedMaintenanceType === 'جهاز' ? setColumnType('ص') : undefined;
     }, []);
 
     const setDeviceType = useCallback((type: DeviceType) => {

@@ -1,7 +1,7 @@
 import { shadowStyles } from '@/styles/common';
 import { DeviceType } from '@/types/maintenance';
 import { PlusCircle } from 'lucide-react-native';
-import { useRef, useState } from 'react';
+import { RefObject, useRef, useState } from 'react';
 import {
   View,
   findNodeHandle,
@@ -17,14 +17,21 @@ import {
 interface AddNoteProps {
   deviceType: DeviceType;
   setDeviceNote: (deviceType: DeviceType, note: string) => void;
+  scrollViewRef: RefObject<ScrollView | null>;
+  scrollYRef: RefObject<number>;
 }
-export function AddNote({ deviceType, setDeviceNote }: AddNoteProps) {
+
+export function AddNote({
+  deviceType,
+  setDeviceNote,
+  scrollViewRef,
+  scrollYRef,
+}: AddNoteProps) {
   const [note, setNote] = useState<string>('');
   const [notesHeight, setNotesHeight] = useState(44);
   const TextInputRef = useRef<TextInput>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const scrollYRef = useRef(0);
   const prevVisibleNotesHeightRef = useRef(56);
+
   const scrollToNotesInput = () => {
     if (Platform.OS === 'web') {
       return;
@@ -84,7 +91,7 @@ export function AddNote({ deviceType, setDeviceNote }: AddNoteProps) {
             const currentY = scrollYRef.current || 0;
             scrollViewRef.current?.scrollTo({
               y: currentY + delta,
-              animated: false,
+              animated: true,
             });
           }
           prevVisibleNotesHeightRef.current = visibleH;
