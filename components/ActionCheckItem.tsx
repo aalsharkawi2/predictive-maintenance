@@ -1,14 +1,28 @@
+import { LucideIcon } from 'lucide-react-native';
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { CheckCircle2 } from 'lucide-react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  TextStyle,
+} from 'react-native';
 
 interface ActionCheckItemProps {
   label: string;
   isSelected: boolean;
   onToggle: () => void;
+  Icon: LucideIcon;
+  TextStyle: TextStyle;
 }
 
-export function ActionCheckItem({ label, isSelected, onToggle }: ActionCheckItemProps) {
+export function ActionCheckItem({
+  label,
+  isSelected,
+  onToggle,
+  Icon,
+  TextStyle,
+}: ActionCheckItemProps) {
   return (
     <TouchableOpacity
       style={styles.checkItem}
@@ -23,12 +37,9 @@ export function ActionCheckItem({ label, isSelected, onToggle }: ActionCheckItem
           isSelected && styles.selectedCheckCircleContainer,
         ]}
       >
-        <CheckCircle2
-          size={24}
-          color={isSelected ? '#ffffff' : '#2563eb'}
-        />
+        <Icon size={24} color={isSelected ? '#ffffff' : '#2563eb'} />
       </View>
-      <Text style={styles.checkText}>{label}</Text>
+      <Text style={TextStyle}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -49,12 +60,5 @@ const styles = StyleSheet.create({
   selectedCheckCircleContainer: {
     borderRadius: 20,
     backgroundColor: '#2563eb',
-  },
-  checkText: {
-    fontFamily: 'Cairo-Regular',
-    fontSize: 16,
-    color: '#1f2937',
-    flex: 1,
-    textAlign: 'right',
   },
 });

@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Camera } from 'lucide-react-native';
+import { Camera, CheckCheck, CheckCircle2 } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
 import { TypeSelector } from '@/components/TypeSelector';
 import { ActionCheckItem } from '@/components/ActionCheckItem';
@@ -48,6 +48,25 @@ export default function DevicesScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollYRef = useRef(0);
 
+  const isAllActionsChecked = () => {
+    if (!state.selectedDeviceType) {
+      return;
+    }
+    return (
+      state.deviceActions[state.selectedDeviceType].filter(
+        (action) => action.isSelected === true,
+      ).length === state.deviceActions[state.selectedDeviceType].length
+    );
+  };
+
+  const isAnyActionChecked = () => {
+    const flagArray = deviceTypes.map(
+      (type) =>
+        state.deviceActions[type].filter((action) => action.isSelected === true)
+          .length >= 1,
+    );
+    return flagArray.filter((flag) => flag === true).length;
+  };
   const renderIdentifier = (type: MaintenanceType) => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>معرف ال{type}</Text>
@@ -75,12 +94,33 @@ export default function DevicesScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
         <View style={styles.checklist}>
+          <View style={styles.checkAllContainer}>
+            <ActionCheckItem
+              label={'اختيار الكل'}
+              isSelected={false}
+              onToggle={() => {
+                state.deviceActions[deviceType].filter(
+                  (action, index) =>
+                    !action.isSelected && toggleAction(deviceType, index),
+                );
+                if (isAllActionsChecked()) {
+                  state.deviceActions[deviceType].map((action, index) =>
+                    toggleAction(deviceType, index),
+                  );
+                }
+              }}
+              Icon={CheckCheck}
+              TextStyle={styles.checkAllText}
+            />
+          </View>
           {actions.map((actionItem, index) => (
             <ActionCheckItem
               key={`${deviceType}-${index}`}
               label={actionItem.action}
               isSelected={actionItem.isSelected}
               onToggle={() => toggleAction(deviceType, index)}
+              Icon={CheckCircle2}
+              TextStyle={styles.checkText}
             />
           ))}
           {notes.map(
@@ -167,7 +207,11 @@ export default function DevicesScreen() {
             {/* Camera Button */}
             {!!state.deviceId && (
               <TouchableOpacity
-                style={styles.genericButton}
+                style={[
+                  isAnyActionChecked()
+                    ? styles.genericButton
+                    : styles.genericDisabledButton,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="التقاط صورة"
               >
@@ -223,8 +267,39 @@ const styles = StyleSheet.create({
     gap: 16,
     ...shadowStyles.card,
   },
+  checkText: {
+    fontFamily: 'Cairo-Regular',
+    fontSize: 16,
+    color: '#1f2937',
+    flex: 1,
+    textAlign: 'right',
+  },
+  checkAllContainer: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e5e7eb',
+    paddingBottom: 8,
+    marginBottom: 8,
+    width: '100%',
+    alignSelf: 'flex-end',
+  },
+  checkAllText: {
+    fontFamily: 'Cairo-Regular',
+    fontSize: 16,
+    color: '#2563eb',
+    flex: 1,
+    textAlign: 'right',
+  },
   genericButton: {
     backgroundColor: '#2563eb',
+    flexDirection: 'row',
+    gap: 8,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  genericDisabledButton: {
+    backgroundColor: '#799eecff',
     flexDirection: 'row',
     gap: 8,
     padding: 16,
