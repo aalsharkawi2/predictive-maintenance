@@ -19,7 +19,6 @@ export default function TabLayout() {
     AvoidSoftInput.setEnabled(true);
     AvoidSoftInput.setAvoidOffset(70); // Height of tab bar
     AvoidSoftInput.setEasing('easeInOut');
-    AvoidSoftInput.setAnimationDuration(220);
     AvoidSoftInput.setHideAnimationDelay(0);
     AvoidSoftInput.setHideAnimationDuration(220);
     AvoidSoftInput.setShowAnimationDelay(0);
