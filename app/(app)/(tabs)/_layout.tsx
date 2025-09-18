@@ -1,9 +1,10 @@
 import { Tabs } from 'expo-router';
 import { ClipboardList, Settings, Home, History } from 'lucide-react-native';
-import { I18nManager, Dimensions, Keyboard } from 'react-native';
+import { I18nManager } from 'react-native';
 import useSystemUI from '@/hooks/useSystemUI';
-import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { View } from 'react-native';
+import { AvoidSoftInput } from 'react-native-avoid-softinput';
 
 if (!I18nManager.isRTL) {
   I18nManager.forceRTL(false);
@@ -11,25 +12,24 @@ if (!I18nManager.isRTL) {
 
 export default function TabLayout() {
   useSystemUI('visible');
-  const [keyboardShow, setKeyboardShow] = useState<boolean>();
+
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        setKeyboardShow(true);
-      },
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setKeyboardShow(false);
-      },
-    );
+    // Configure AvoidSoftInput to prevent the tab bar from moving
+    AvoidSoftInput.setShouldMimicIOSBehavior(true);
+    AvoidSoftInput.setEnabled(true);
+    AvoidSoftInput.setAvoidOffset(70); // Height of tab bar
+    AvoidSoftInput.setEasing('easeInOut');
+    AvoidSoftInput.setAnimationDuration(220);
+    AvoidSoftInput.setHideAnimationDelay(0);
+    AvoidSoftInput.setHideAnimationDuration(220);
+    AvoidSoftInput.setShowAnimationDelay(0);
+    AvoidSoftInput.setShowAnimationDuration(220);
+
     return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
+      AvoidSoftInput.setEnabled(false);
     };
   }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <Tabs
@@ -41,9 +41,10 @@ export default function TabLayout() {
             direction: 'rtl',
             paddingBottom: 5,
             paddingTop: 5,
-            marginBottom: keyboardShow ? -40 : 0,
-            marginTop: keyboardShow ? -4 : 0,
-            opacity: keyboardShow ? 0 : 1,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
           },
           tabBarLabelStyle: { fontFamily: 'Cairo6Regular' },
           headerTitleStyle: { fontFamily: 'Cairo-Bold' },
@@ -56,22 +57,17 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: keyboardShow ? '' : 'الرئيسية',
-            tabBarIcon: ({ color, size }) => (
-              <Home size={size} color={keyboardShow ? '#f5f5f5' : color} />
-            ),
+            title: 'الرئيسية',
+            tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
             headerTitle: 'الرئيسية',
           }}
         />
         <Tabs.Screen
           name="devices"
           options={{
-            title: keyboardShow ? '' : 'الأجهزة',
+            title: 'الأجهزة',
             tabBarIcon: ({ color, size }) => (
-              <ClipboardList
-                size={size}
-                color={keyboardShow ? '#f5f5f5' : color}
-              />
+              <ClipboardList size={size} color={color} />
             ),
             headerTitle: 'الأجهزة',
           }}
@@ -79,9 +75,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="history"
           options={{
-            title: keyboardShow ? '' : 'السجل',
+            title: 'السجل',
             tabBarIcon: ({ color, size }) => (
-              <History size={size} color={keyboardShow ? '#f5f5f5' : color} />
+              <History size={size} color={color} />
             ),
             headerTitle: 'السجل',
           }}
@@ -89,28 +85,14 @@ export default function TabLayout() {
         <Tabs.Screen
           name="settings"
           options={{
-            title: keyboardShow ? '' : 'الإعدادات',
+            title: 'الإعدادات',
             tabBarIcon: ({ color, size }) => (
-              <Settings size={size} color={keyboardShow ? '#f5f5f5' : color} />
+              <Settings size={size} color={color} />
             ),
             headerTitle: 'الإعدادات',
           }}
         />
       </Tabs>
-      {keyboardShow && (
-        <View pointerEvents="auto" style={styles.tabBarOverlay} />
-      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBarOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 70, // same as tab bar height
-    zIndex: 999,
-  },
-});
