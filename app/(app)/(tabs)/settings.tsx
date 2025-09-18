@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     padding: 20,
+    paddingBottom: 90, // Account for fixed tab bar (70) + padding (20)
   },
   header: {
     alignItems: 'center',

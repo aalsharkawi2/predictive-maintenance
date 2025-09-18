@@ -212,7 +212,6 @@ export default function DevicesScreen() {
           ref={scrollViewRef}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets
           keyboardDismissMode={
             Platform.OS === 'ios' ? 'interactive' : 'on-drag'
           }
@@ -350,12 +349,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    paddingBottom: 70, // Account for fixed tab bar
   },
   screen: {
     flex: 1,
   },
   content: {
     padding: 20,
+    paddingBottom: 100, // Extra padding for fixed tab bar
     gap: 24,
     flexGrow: 1,
   },
