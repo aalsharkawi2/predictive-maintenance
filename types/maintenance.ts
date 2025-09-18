@@ -32,6 +32,15 @@ export interface ActionItem<T extends DeviceType> {
     isSelected: boolean;
 }
 
+export interface Photo {
+    uri: string;
+    assetId?: string;
+    width?: number;
+    height?: number;
+    source: 'camera' | 'gallery';
+    editedUri?: string;
+}
+
 export interface MaintenanceState {
     selectedColumnType: ColumnType | null;
     columnNum: number | '';
@@ -44,4 +53,5 @@ export interface MaintenanceState {
         [key in DeviceType]: ActionItem<key>[];
     }
     deviceNotes: { [key in DeviceType]: string[] };
+    photo: Photo | null;
 }

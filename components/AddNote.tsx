@@ -36,6 +36,7 @@ export function AddNote({
     if (Platform.OS === 'web') {
       return;
     }
+    /*
     if (TextInputRef.current?.isFocused?.()) {
       const inputHandle = findNodeHandle(TextInputRef.current);
       const scrollHandle = findNodeHandle(scrollViewRef.current);
@@ -52,6 +53,7 @@ export function AddNote({
         },
       );
     }
+      */
   };
 
   return (
@@ -83,6 +85,7 @@ export function AddNote({
             }
             return;
           }
+          /*
           const newContentH = e.nativeEvent.contentSize.height;
           setNotesHeight(newContentH);
           const visibleH = Math.max(56, Math.min(newContentH, 160));
@@ -95,6 +98,7 @@ export function AddNote({
             });
           }
           prevVisibleNotesHeightRef.current = visibleH;
+        */
         }}
         textAlignVertical="top"
       />

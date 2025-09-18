@@ -5,7 +5,8 @@ import {
     DeviceType,
     DeviceActions,
     ActionItem,
-    MaintenanceState
+    MaintenanceState,
+    Photo
 } from '@/types/maintenance';
 
 export const maintenanceTypes: MaintenanceType[] = ['نهاية', 'جهاز'];
@@ -68,6 +69,7 @@ export function useMaintenanceState() {
             'لوحة': getDeviceActions('لوحة'),
         },
         deviceNotes,
+        photo: null,
     }));
 
     const setColumnType = useCallback((type: ColumnType) => {
@@ -83,7 +85,8 @@ export function useMaintenanceState() {
                 ],
                 'لوحة': [
                 ],
-            }
+            },
+            photo: null
         }));
     }, []);
 
@@ -162,6 +165,20 @@ export function useMaintenanceState() {
         });
     }, []);
 
+    const setPhoto = useCallback((photo: Photo) => {
+        setState(prev => ({
+            ...prev,
+            photo
+        }));
+    }, []);
+
+    const clearPhoto = useCallback(() => {
+        setState(prev => ({
+            ...prev,
+            photo: null
+        }));
+    }, []);
+
     return {
         state,
         maintenanceTypes,
@@ -177,5 +194,7 @@ export function useMaintenanceState() {
         toggleAction,
         setDeviceNote,
         deleteNote,
+        setPhoto,
+        clearPhoto,
     };
 }
