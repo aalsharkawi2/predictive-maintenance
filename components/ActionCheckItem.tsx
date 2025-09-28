@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextStyle,
+  StyleProp,
 } from 'react-native';
 
 interface ActionCheckItemProps {
@@ -13,7 +14,9 @@ interface ActionCheckItemProps {
   isSelected: boolean;
   onToggle: () => void;
   Icon: LucideIcon;
-  TextStyle: TextStyle;
+  textStyle: StyleProp<TextStyle>;
+  plainIcon?: boolean;
+  iconColor?: string;
 }
 
 export function ActionCheckItem({
@@ -21,7 +24,9 @@ export function ActionCheckItem({
   isSelected,
   onToggle,
   Icon,
-  TextStyle,
+  textStyle,
+  plainIcon = false,
+  iconColor,
 }: ActionCheckItemProps) {
   return (
     <TouchableOpacity
@@ -31,28 +36,34 @@ export function ActionCheckItem({
       accessibilityLabel={label}
       accessibilityState={{ checked: isSelected }}
     >
-      <View
-        style={[
-          styles.checkCircleContainer,
-          isSelected && styles.selectedCheckCircleContainer,
-        ]}
-      >
-        <Icon size={24} color={isSelected ? '#ffffff' : '#2563eb'} />
-      </View>
-      <Text style={TextStyle}>{label}</Text>
+      {plainIcon ? (
+        <Icon size={24} color={iconColor ?? '#2563eb'} />
+      ) : (
+        <View
+          style={[
+            styles.checkCircleContainer,
+            isSelected && styles.selectedCheckCircleContainer,
+          ]}
+        >
+          <Icon size={24} color={isSelected ? '#ffffff' : '#2563eb'} />
+        </View>
+      )}
+      <Text style={textStyle}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   checkItem: {
+    width: '100%',
     flexDirection: 'row-reverse',
     alignItems: 'center',
+    paddingVertical: 4,
     gap: 12,
   },
   checkCircleContainer: {
-    width: 26,
-    height: 26,
+    width: 25,
+    height: 25,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',

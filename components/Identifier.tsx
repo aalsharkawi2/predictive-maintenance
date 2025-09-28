@@ -30,7 +30,7 @@ export function Identifier({
   identifierHelperFn,
 }: IdentifierProps) {
   const { width } = useWindowDimensions();
-  const isNarrow = width < 420;
+  const isNarrow = width < 424;
   const firstTextInputRef = useRef<TextInput>(null);
   const secondTextInputRef = useRef<TextInput>(null);
   const thirdTextInputRef = useRef<TextInput>(null);

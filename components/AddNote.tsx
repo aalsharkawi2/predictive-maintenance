@@ -85,7 +85,7 @@ export function AddNote({
             }
             return;
           }
-          /*
+
           const newContentH = e.nativeEvent.contentSize.height;
           setNotesHeight(newContentH);
           const visibleH = Math.max(56, Math.min(newContentH, 160));
@@ -98,7 +98,6 @@ export function AddNote({
             });
           }
           prevVisibleNotesHeightRef.current = visibleH;
-        */
         }}
         textAlignVertical="top"
       />

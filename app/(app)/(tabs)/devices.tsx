@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,19 +9,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Image,
-  Modal,
   Linking,
 } from 'react-native';
-import { Camera, CheckCheck, CheckCircle2, Pencil } from 'lucide-react-native';
 import { useMaintenanceState } from '@/hooks/useMaintenanceState';
-import { TypeSelector } from '@/components/TypeSelector';
-import { ActionCheckItem } from '@/components/ActionCheckItem';
-import { NoteItem } from '@/components/NoteItem';
-import { Identifier } from '@/components/Identifier';
+import { ActionsList } from '@/components/ActionsList';
 import { MaintenanceType } from '@/types/maintenance';
 import { shadowStyles } from '@/styles/common';
-import { AddNote } from '@/components/AddNote';
+import { CameraBar } from '@/components/CameraBar';
+import { PermissionsDialog } from '@/components/PermissionsDialog';
+import { MaintenanceTypeSelector } from '@/components/MaintenanceTypeSelector';
+import { DeviceTypeSelector } from '@/components/DeviceTypeSelector';
+import { IdentifierSection } from '@/components/IdentifierSection';
+import { ActionsTextInputSection } from '@/components/ActionsTextInputSection';
+import { SubmitButton } from '@/components/SubmitButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
@@ -40,18 +40,11 @@ export default function DevicesScreen() {
     setMaintenanceType,
     setDeviceType,
     toggleAction,
+    setAllActions,
     setDeviceNote,
     deleteNote,
     setPhoto,
   } = useMaintenanceState();
-
-  const identifierHelperFn = {
-    setColumnType,
-    setColumnNum,
-    setArea,
-    setDeviceNum,
-    setDeviceId,
-  };
 
   const [permissionDialogVisible, setPermissionDialogVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -59,20 +52,13 @@ export default function DevicesScreen() {
 
   const checkAndRequestPermissions = async () => {
     try {
-      const cameraPermission =
-        await ImagePicker.requestCameraPermissionsAsync();
-      const mediaLibraryPermission =
-        await MediaLibrary.requestPermissionsAsync();
-
-      const hasPermissions =
-        cameraPermission.status === 'granted' &&
-        mediaLibraryPermission.status === 'granted';
-
-      if (hasPermissions) {
-        router.push('/camera');
-      } else {
-        setPermissionDialogVisible(true);
-      }
+      const [camera, media] = await Promise.all([
+        ImagePicker.requestCameraPermissionsAsync(),
+        MediaLibrary.requestPermissionsAsync(),
+      ]);
+      camera.status === 'granted' && media.status === 'granted'
+        ? router.push('/camera')
+        : setPermissionDialogVisible(true);
     } catch (error) {
       console.error('Error checking permissions:', error);
       Alert.alert('خطأ', 'حدث خطأ أثناء التحقق من الأذونات');
@@ -82,11 +68,9 @@ export default function DevicesScreen() {
   // Handle opening device settings
   const handleOpenSettings = () => {
     setPermissionDialogVisible(false);
-    if (Platform.OS === 'ios') {
-      Linking.openURL('app-settings:');
-    } else {
-      Linking.openSettings();
-    }
+    Platform.OS === 'ios'
+      ? Linking.openURL('app-settings:')
+      : Linking.openSettings();
   };
 
   // Open the image editor with the existing photo
@@ -106,98 +90,47 @@ export default function DevicesScreen() {
 */
   };
 
-  const isAllActionsChecked = () => {
-    if (!state.selectedDeviceType) {
-      return;
-    }
-    return (
-      state.deviceActions[state.selectedDeviceType].filter(
-        (action) => action.isSelected === true,
-      ).length === state.deviceActions[state.selectedDeviceType].length
-    );
-  };
+  const allActionsSelected = useMemo(() => {
+    if (!state.selectedDeviceType) return false;
+    const list = state.deviceActions[state.selectedDeviceType];
+    return list.length > 0 && list.every((a) => a.isSelected);
+  }, [state.deviceActions, state.selectedDeviceType]);
 
-  const isAnyActionChecked = () => {
-    const flagArray = deviceTypes.map(
-      (type) =>
-        state.deviceActions[type].filter((action) => action.isSelected === true)
-          .length >= 1,
-    );
-    return flagArray.filter((flag) => flag === true).length;
-  };
+  const anyActionSelected = useMemo(
+    () =>
+      deviceTypes.some((t) => state.deviceActions[t].some((a) => a.isSelected)),
+    [state.deviceActions],
+  );
   const renderIdentifier = (type: MaintenanceType) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>معرف ال{type}</Text>
-      <Identifier
-        type={type}
-        state={state}
-        identifierHelperFn={identifierHelperFn}
-      />
-    </View>
+    <IdentifierSection
+      title={`معرف ال${type}`}
+      type={type}
+      state={state}
+      identifierHelperFn={{
+        setColumnType,
+        setColumnNum,
+        setArea,
+        setDeviceNum,
+        setDeviceId,
+      }}
+    />
   );
 
   const renderActionsList = () => {
-    let deviceType;
-    if (!state.deviceId) {
-      deviceType = null;
-    } else {
-      deviceType = state.selectedDeviceType;
-    }
+    const deviceType = state.deviceId ? state.selectedDeviceType : null;
     if (!deviceType) return null;
-
-    const actions = state.deviceActions[deviceType];
-    const notes = state.deviceNotes[deviceType];
-
     return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
-        <View style={styles.checklist}>
-          <View style={styles.checkAllContainer}>
-            <ActionCheckItem
-              label={'اختيار الكل'}
-              isSelected={false}
-              onToggle={() => {
-                state.deviceActions[deviceType].filter(
-                  (action, index) =>
-                    !action.isSelected && toggleAction(deviceType, index),
-                );
-                if (isAllActionsChecked()) {
-                  state.deviceActions[deviceType].map((action, index) =>
-                    toggleAction(deviceType, index),
-                  );
-                }
-              }}
-              Icon={CheckCheck}
-              TextStyle={styles.checkAllText}
-            />
-          </View>
-          {actions.map((actionItem, index) => (
-            <ActionCheckItem
-              key={`${deviceType}-${index}`}
-              label={actionItem.action}
-              isSelected={actionItem.isSelected}
-              onToggle={() => toggleAction(deviceType, index)}
-              Icon={CheckCircle2}
-              TextStyle={styles.checkText}
-            />
-          ))}
-          {notes.map(
-            (note) =>
-              state.selectedDeviceType && (
-                <NoteItem
-                  note={note}
-                  onDelete={() => deleteNote(deviceType, note)}
-                ></NoteItem>
-              ),
-          )}
-        </View>
-        <AddNote
-          deviceType={deviceType}
-          setDeviceNote={setDeviceNote}
-          scrollViewRef={scrollViewRef}
-          scrollYRef={scrollYRef}
-        ></AddNote>
-      </View>
+      <ActionsList
+        deviceType={deviceType}
+        actions={state.deviceActions[deviceType]}
+        notes={state.deviceNotes[deviceType]}
+        onToggle={(index) => toggleAction(deviceType, index)}
+        onToggleAll={(selected) => setAllActions(deviceType, selected)}
+        onAddNote={(note) => setDeviceNote(deviceType, note)}
+        onDeleteNote={(note) => deleteNote(deviceType, note)}
+        scrollViewRef={scrollViewRef}
+        scrollYRef={scrollYRef}
+      />
     );
   };
 
@@ -213,19 +146,16 @@ export default function DevicesScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
-          keyboardDismissMode={
-            Platform.OS === 'ios' ? 'interactive' : 'on-drag'
-          }
+          keyboardDismissMode="interactive"
           onScroll={(e) => {
             scrollYRef.current = e.nativeEvent.contentOffset.y;
           }}
           scrollEventThrottle={16}
         >
           {/* Maintenance Type Selector */}
-          <TypeSelector
-            title="نوع الصيانة"
+          <MaintenanceTypeSelector
             options={maintenanceTypes}
-            selectedOption={state.selectedMaintenanceType}
+            selected={state.selectedMaintenanceType}
             onSelect={(type) => {
               setMaintenanceType(type);
               setDeviceId('');
@@ -238,11 +168,10 @@ export default function DevicesScreen() {
 
           {/* Device Type Selector (Only for 'جهاز' maintenance type) */}
           {state.selectedMaintenanceType === 'جهاز' && !!state.deviceId && (
-            <TypeSelector
-              title="نوع المكون"
+            <DeviceTypeSelector
               options={deviceTypes}
-              selectedOption={state.selectedDeviceType}
-              onSelect={(type) => setDeviceType(type)}
+              selected={state.selectedDeviceType}
+              onSelect={setDeviceType}
             />
           )}
 
@@ -250,98 +179,33 @@ export default function DevicesScreen() {
           {state.selectedMaintenanceType === 'جهاز'
             ? state.selectedDeviceType !== null && renderActionsList()
             : state.selectedMaintenanceType !== null && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>الإجراءات المتخذة</Text>
-                  <TextInput
-                    style={shadowStyles.input}
-                    placeholder="placeholder"
-                    textAlign="right"
-                    accessibilityLabel="الإجراءات المتخذة"
-                  />
-                </View>
+                <ActionsTextInputSection />
               )}
           <View style={styles.flexSpacer} />
           <View style={styles.section}>
             {/* Camera Button and Photo Thumbnail */}
             {!!state.deviceId && (
-              <View style={styles.cameraButtonContainer}>
-                <TouchableOpacity
-                  style={[
-                    isAnyActionChecked()
-                      ? styles.genericButton
-                      : styles.genericDisabledButton,
-                  ]}
-                  onPress={checkAndRequestPermissions}
-                  disabled={!isAnyActionChecked()}
-                  accessibilityRole="button"
-                  accessibilityLabel="التقاط صورة"
-                >
-                  <Camera size={24} color="#ffffff" />
-                  <Text style={styles.photoButtonText}>التقاط صورة</Text>
-                </TouchableOpacity>
-                {state.photo && (
-                  <TouchableOpacity
-                    style={styles.thumbnailContainer}
-                    onPress={handleEditPhoto}
-                    accessibilityLabel="تعديل الصورة"
-                  >
-                    <Image
-                      source={{ uri: state.photo.editedUri || state.photo.uri }}
-                      style={styles.thumbnail}
-                    />
-                    <View style={styles.editIconContainer}>
-                      <Pencil size={12} color="#ffffff" />
-                    </View>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <CameraBar
+                enabled={anyActionSelected}
+                onPressCamera={checkAndRequestPermissions}
+                photoUri={
+                  state.photo ? state.photo.editedUri || state.photo.uri : null
+                }
+                onPressEdit={handleEditPhoto}
+              />
             )}
 
             {/* Submit Button */}
-            <TouchableOpacity
-              style={styles.submitButton}
-              accessibilityRole="button"
-              accessibilityLabel="حفظ وإنهاء"
-            >
-              <Text style={styles.submitButtonText}>حفظ وإنهاء</Text>
-            </TouchableOpacity>
+            <SubmitButton />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
       {/* Permissions Dialog */}
-      <Modal
+      <PermissionsDialog
         visible={permissionDialogVisible}
-        transparent
-        animationType="fade"
+        onOpenSettings={handleOpenSettings}
         onRequestClose={() => setPermissionDialogVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.permissionDialog}>
-            <Text style={styles.permissionTitle}>الأذونات مطلوبة</Text>
-            <Text style={styles.permissionText}>
-              يحتاج التطبيق إلى إذن الوصول إلى الكاميرا ومكتبة الوسائط لالتقاط
-              وحفظ الصور.
-            </Text>
-            <View style={styles.permissionButtons}>
-              <TouchableOpacity
-                style={styles.permissionButton}
-                onPress={handleOpenSettings}
-              >
-                <Text style={styles.permissionButtonText}>فتح الإعدادات</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.permissionButton,
-                  { backgroundColor: '#6b7280' },
-                ]}
-                onPress={() => setPermissionDialogVisible(false)}
-              >
-                <Text style={styles.permissionButtonText}>إلغاء</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      />
     </SafeAreaView>
   );
 }
@@ -371,87 +235,6 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     textAlign: 'right',
   },
-  checklist: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 16,
-    gap: 16,
-    ...shadowStyles.card,
-  },
-  checkText: {
-    fontFamily: 'Cairo-Regular',
-    fontSize: 16,
-    color: '#1f2937',
-    flex: 1,
-    textAlign: 'right',
-  },
-  checkAllContainer: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e7eb',
-    paddingBottom: 8,
-    marginBottom: 8,
-    width: '100%',
-    alignSelf: 'flex-end',
-  },
-  checkAllText: {
-    fontFamily: 'Cairo-Regular',
-    fontSize: 16,
-    color: '#2563eb',
-    flex: 1,
-    textAlign: 'right',
-  },
-  cameraButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  genericButton: {
-    backgroundColor: '#2563eb',
-    flexDirection: 'row',
-    gap: 8,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  genericDisabledButton: {
-    backgroundColor: '#799eecff',
-    flexDirection: 'row',
-    gap: 8,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  photoButtonText: {
-    color: '#ffffff',
-    fontFamily: 'Cairo-Bold',
-    fontSize: 16,
-  },
-  thumbnailContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    overflow: 'hidden',
-    ...shadowStyles.card,
-  },
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-  },
-  editIconContainer: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(37, 99, 235, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   submitButton: {
     backgroundColor: '#059669',
     padding: 16,
@@ -461,52 +244,6 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#ffffff',
-    fontFamily: 'Cairo-Bold',
-    fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  permissionDialog: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 20,
-    width: '100%',
-    maxWidth: 400,
-    ...shadowStyles.card,
-  },
-  permissionTitle: {
-    fontSize: 18,
-    fontFamily: 'Cairo-Bold',
-    marginBottom: 10,
-    textAlign: 'center',
-    color: '#1f2937',
-  },
-  permissionText: {
-    fontSize: 16,
-    fontFamily: 'Cairo-Regular',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#4b5563',
-  },
-  permissionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  permissionButton: {
-    backgroundColor: '#2563eb',
-    padding: 12,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: 'center',
-  },
-  permissionButtonText: {
-    color: 'white',
     fontFamily: 'Cairo-Bold',
     fontSize: 16,
   },
