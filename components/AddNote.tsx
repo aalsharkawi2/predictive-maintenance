@@ -58,11 +58,14 @@ export function AddNote({
 
   return (
     <View style={styles.addNoteItem}>
+      {/** Compute the visible height for both input and button so they match */}
+      {/* Note: clamp to [56, 160] like the input's min/max */}
+
       <TextInput
         style={[
           shadowStyles.input,
           styles.notesInput,
-          { height: Math.max(56, notesHeight) },
+          { height: Math.max(54, Math.min(notesHeight, 160)) },
         ]}
         onChangeText={setNote}
         value={note}
@@ -102,7 +105,7 @@ export function AddNote({
         textAlignVertical="top"
       />
       <TouchableOpacity
-        style={styles.genericButton}
+        style={[styles.genericButton]}
         onPress={() => {
           if (deviceType && note.trim()) {
             setDeviceNote(deviceType, note.trim());
@@ -126,7 +129,7 @@ const styles = StyleSheet.create({
   addNoteItem: {
     flexDirection: 'row',
     alignSelf: 'stretch',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: 12,
   },
   notesInput: {

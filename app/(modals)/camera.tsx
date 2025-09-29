@@ -10,25 +10,31 @@ import {
   Linking,
   StatusBar,
   AppState,
+  Image,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
-import { router } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  setLastPhoto,
+  setShouldCloseCameraOnce,
+  setDevicePhoto,
+} from '@/store/photoSlice';
+import { RootState } from '@/store';
+import { DeviceType } from '@/types/maintenance';
 
 import useSystemUI from '@/hooks/useSystemUI';
 
-import {
-  X,
-  RotateCcw,
-  Image as ImageIcon,
-  Flashlight,
-} from 'lucide-react-native';
+import { X, Image as ImageIcon, Flashlight } from 'lucide-react-native';
 import { shadowStyles } from '@/styles/common';
 
 export default function CameraScreen() {
   useSystemUI('hidden');
+  const params = useLocalSearchParams<{ deviceType?: DeviceType | string }>();
 
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [mediaLibraryPermission, requestMediaLibraryPermission] =
@@ -37,7 +43,43 @@ export default function CameraScreen() {
   const [cameraType, setCameraType] = useState<'front' | 'back'>('back');
   const [flash, setFlash] = useState<boolean>(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [freezeUri, setFreezeUri] = useState<string | null>(null);
+  const [shutterFlash, setShutterFlash] = useState(false);
+  const freezeOpacity = useRef(new Animated.Value(0)).current;
   const cameraRef = useRef<CameraView>(null);
+  const navigatedRef = useRef(false);
+  const dispatch = useDispatch();
+  const shouldCloseCameraOnce = useSelector(
+    (s: RootState) => s.photo.shouldCloseCameraOnce,
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // reset guard on focus so user can navigate again next time
+      navigatedRef.current = false;
+      setIsCapturing(false);
+      setFreezeUri(null);
+      freezeOpacity.setValue(0);
+      // If editor signaled to close camera after finishing crop, close now
+      if (shouldCloseCameraOnce) {
+        dispatch(setShouldCloseCameraOnce(false));
+        // Close this modal to reveal Devices
+        setTimeout(() => router.back(), 0);
+      }
+      return () => {};
+    }, [shouldCloseCameraOnce]),
+  );
+
+  useEffect(() => {
+    if (freezeUri) {
+      freezeOpacity.setValue(0);
+      Animated.timing(freezeOpacity, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [freezeUri]);
 
   // Function to pick an image from the gallery
   const pickImage = async () => {
@@ -47,19 +89,22 @@ export default function CameraScreen() {
         allowsEditing: true,
         quality: 1,
       });
-      /*
+
       if (!result.canceled && result.assets[0]) {
+        if (navigatedRef.current) return;
+        navigatedRef.current = true;
         const asset = result.assets[0];
-        router.push({
+        (router.push as any)({
           pathname: '/(modals)/image-editor',
           params: {
             uri: asset.uri,
             width: asset.width,
             height: asset.height,
             source: 'gallery',
+            deviceType: (params.deviceType as DeviceType) ?? undefined,
           },
         });
-      } */
+      }
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('خطأ', 'حدث خطأ أثناء اختيار الصورة');
@@ -77,31 +122,72 @@ export default function CameraScreen() {
         throw new Error('Camera ref is null');
       }
 
-      // Using the CameraView takePictureAsync method
+      // Trigger a quick shutter flash for immediate user feedback
+      setShutterFlash(true);
+      setTimeout(() => setShutterFlash(false), 120);
+
+      // Capture quickly and then overlay a freeze-frame so feed appears inactive
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
+      if (!photo) throw new Error('Failed to take picture');
 
-      if (!photo) {
-        throw new Error('Failed to take picture');
-      }
+      // Freeze the current view by overlaying the captured frame
+      setFreezeUri(photo.uri);
 
-      // Save the photo to media library
-      const asset = await MediaLibrary.createAssetAsync(photo.uri);
-
-      // Navigate to the image editor with the photo data
-      /*router.push({
-        pathname: '/(modals)/image-editor',
-        params: {
-          uri: asset.uri,
-          assetId: asset.id,
+      // Save photo info in Redux for thumbnail and re-edit
+      dispatch(
+        setLastPhoto({
+          uri: photo.uri,
           width: photo.width ?? 0,
           height: photo.height ?? 0,
-          source: 'camera',
-        },
-      }); */
+          createdAt: Date.now(),
+        }),
+      );
+      // Also associate per device type if provided via route params
+      const dt = (params.deviceType as DeviceType) ?? undefined;
+      if (dt) {
+        dispatch(
+          setDevicePhoto({
+            deviceType: dt,
+            photo: {
+              uri: photo.uri,
+              width: photo.width ?? 0,
+              height: photo.height ?? 0,
+              createdAt: Date.now(),
+            },
+          }),
+        );
+      }
+      // Flag is set by editor when cropping completes; no need to set it here
+
+      // Navigate immediately to the editor with the captured uri
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        (router.push as any)({
+          pathname: '/(modals)/image-editor',
+          params: {
+            uri: photo.uri,
+            width: photo.width ?? 0,
+            height: photo.height ?? 0,
+            source: 'camera',
+            deviceType: (params.deviceType as DeviceType) ?? undefined,
+          },
+        });
+      }
+
+      // Optionally save to media library in the background (non-blocking)
+      try {
+        if (mediaLibraryPermission?.granted) {
+          await MediaLibrary.createAssetAsync(photo.uri);
+        }
+      } catch (e) {
+        // Non-fatal, don't block navigation
+        console.warn('Background save failed:', e);
+      }
     } catch (error) {
       console.error('Error taking picture:', error);
       Alert.alert('خطأ', 'حدث خطأ أثناء التقاط الصورة');
     } finally {
+      // Keep UI responsive; the feed remains visible under the incoming editor modal
       setIsCapturing(false);
     }
   };
@@ -111,10 +197,7 @@ export default function CameraScreen() {
     setFlash(!flash);
   };
 
-  // Toggle camera type (front/back)
-  const toggleCameraType = () => {
-    setCameraType(cameraType === 'back' ? 'front' : 'back');
-  };
+  // Removed front/back toggle per requirements
 
   // Handle permission requests
   const handlePermissions = async () => {
@@ -221,21 +304,12 @@ export default function CameraScreen() {
             >
               <Flashlight color="#ffffff" size={24} />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={toggleCameraType}
-              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-              accessibilityLabel="تبديل الكاميرا"
-            >
-              <RotateCcw color="#ffffff" size={24} />
-            </TouchableOpacity>
           </View>
 
           <View style={styles.bottomControls}>
             <TouchableOpacity
               style={styles.galleryButton}
-              onPress={pickImage}
+              onPress={isCapturing ? undefined : pickImage}
               hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
               accessibilityLabel="اختيار من المعرض"
             >
@@ -260,6 +334,25 @@ export default function CameraScreen() {
           </View>
         </SafeAreaView>
       </CameraView>
+      {/* Overlays: blocker, freeze-frame (fade-in), and tiny capturing toast */}
+      {isCapturing && <View style={styles.blocker} pointerEvents="auto" />}
+      {freezeUri && (
+        <Animated.Image
+          source={{ uri: freezeUri }}
+          style={[StyleSheet.absoluteFillObject, { opacity: freezeOpacity }]}
+          resizeMode="cover"
+          accessibilityLabel="freeze-frame"
+        />
+      )}
+      {isCapturing && (
+        <View style={styles.centerToast} pointerEvents="none">
+          <ActivityIndicator color="#fff" size="small" />
+          <Text style={styles.centerToastText}>Capturing…</Text>
+        </View>
+      )}
+      {shutterFlash && (
+        <View style={styles.shutterFlash} pointerEvents="none" />
+      )}
     </View>
   );
 }
@@ -281,6 +374,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
   },
+
   closeButton: {
     width: 40,
     height: 40,
@@ -305,6 +399,41 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    paddingBottom: 80,
+  },
+  blocker: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+  },
+  centerToast: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: [{ translateX: -60 }, { translateY: -20 }],
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  centerToastText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontFamily: 'Cairo-Bold',
+  },
+  shutterFlash: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'white',
+    opacity: 0.2,
   },
   galleryButton: {
     width: 50,

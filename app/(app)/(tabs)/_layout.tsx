@@ -68,7 +68,7 @@ export default function TabLayout() {
           paddingTop: tabBarVisible ? 5 : 0,
           opacity: tabBarVisible ? 1 : 0,
         },
-        tabBarLabelStyle: { fontFamily: 'Cairo6Regular' },
+        tabBarLabelStyle: { fontFamily: 'Cairo-Regular' },
         headerTitleStyle: { fontFamily: 'Cairo-Bold' },
         headerTitleAlign: 'center',
         tabBarHideOnKeyboard: false,

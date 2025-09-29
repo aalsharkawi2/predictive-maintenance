@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -26,8 +26,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { router } from 'expo-router';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { DeviceType } from '@/types/maintenance';
+import { clearAllDevicePhotos } from '@/store/photoSlice';
 
 export default function DevicesScreen() {
+  const photosByDevice = useSelector((s: RootState) => s.photo.byDeviceType);
+  const dispatch = useDispatch();
   const {
     state,
     maintenanceTypes,
@@ -56,14 +62,25 @@ export default function DevicesScreen() {
         ImagePicker.requestCameraPermissionsAsync(),
         MediaLibrary.requestPermissionsAsync(),
       ]);
+      const dt = state.selectedDeviceType as DeviceType | null;
       camera.status === 'granted' && media.status === 'granted'
-        ? router.push('/camera')
+        ? (router.push as any)({
+            pathname: '/camera',
+            params: { deviceType: dt ?? undefined },
+          })
         : setPermissionDialogVisible(true);
     } catch (error) {
       console.error('Error checking permissions:', error);
       Alert.alert('خطأ', 'حدث خطأ أثناء التحقق من الأذونات');
     }
   };
+
+  // When the form resets (deviceId cleared), also clear all device photos
+  useEffect(() => {
+    if (!state.deviceId) {
+      dispatch(clearAllDevicePhotos());
+    }
+  }, [state.deviceId]);
 
   // Handle opening device settings
   const handleOpenSettings = () => {
@@ -73,21 +90,22 @@ export default function DevicesScreen() {
       : Linking.openSettings();
   };
 
-  // Open the image editor with the existing photo
+  // Open the image editor with the existing photo for selected device type
   const handleEditPhoto = () => {
-    if (!state.photo) return;
-    /*
+    const dt = state.selectedDeviceType as DeviceType | null;
+    if (!dt) return;
+    const p = photosByDevice?.[dt as DeviceType];
+    if (!p) return;
     router.push({
-      pathname: '/image-editor',
+      pathname: '/(modals)/image-editor',
       params: {
-        uri: state.photo.editedUri || state.photo.uri,
-        assetId: state.photo.assetId,
-        width: state.photo.width?.toString(),
-        height: state.photo.height?.toString(),
-        source: state.photo.source,
+        uri: p.uri,
+        width: String(p.width ?? 0),
+        height: String(p.height ?? 0),
+        source: 'gallery',
+        deviceType: dt,
       },
-    });
-*/
+    } as any);
   };
 
   const allActionsSelected = useMemo(() => {
@@ -96,11 +114,12 @@ export default function DevicesScreen() {
     return list.length > 0 && list.every((a) => a.isSelected);
   }, [state.deviceActions, state.selectedDeviceType]);
 
-  const anyActionSelected = useMemo(
-    () =>
-      deviceTypes.some((t) => state.deviceActions[t].some((a) => a.isSelected)),
-    [state.deviceActions],
-  );
+  // Camera enabled only when at least one action is selected for the currently selected device type
+  const anyActionSelected = useMemo(() => {
+    const dt = state.selectedDeviceType as DeviceType | null;
+    if (!dt) return false;
+    return state.deviceActions[dt].some((a) => a.isSelected);
+  }, [state.deviceActions, state.selectedDeviceType]);
   const renderIdentifier = (type: MaintenanceType) => (
     <IdentifierSection
       title={`معرف ال${type}`}
@@ -133,6 +152,23 @@ export default function DevicesScreen() {
       />
     );
   };
+
+  // Enable submit only when (for 'جهاز') at least one device type has
+  // - any action selected AND
+  // - a photo captured for that device type
+  const canSubmit = useMemo(() => {
+    if (state.selectedMaintenanceType !== 'جهاز') return true;
+    return deviceTypes.some((dt) => {
+      const hasAction = state.deviceActions[dt].some((a) => a.isSelected);
+      const hasPhoto = !!photosByDevice?.[dt]?.uri;
+      return hasAction && hasPhoto;
+    });
+  }, [
+    state.selectedMaintenanceType,
+    state.deviceActions,
+    photosByDevice,
+    deviceTypes,
+  ]);
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
@@ -188,15 +224,16 @@ export default function DevicesScreen() {
               <CameraBar
                 enabled={anyActionSelected}
                 onPressCamera={checkAndRequestPermissions}
-                photoUri={
-                  state.photo ? state.photo.editedUri || state.photo.uri : null
-                }
+                photoUri={(() => {
+                  const dt = state.selectedDeviceType as DeviceType | null;
+                  return dt ? (photosByDevice?.[dt]?.uri ?? null) : null;
+                })()}
                 onPressEdit={handleEditPhoto}
               />
             )}
 
             {/* Submit Button */}
-            <SubmitButton />
+            <SubmitButton disabled={!canSubmit} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -35,9 +35,8 @@ export function CameraBar({
           accessibilityLabel="تعديل الصورة"
         >
           <Image source={{ uri: photoUri }} style={styles.thumbnail} />
-          <View style={styles.editIconContainer}>
-            <Pencil size={12} color="#ffffff" />
-          </View>
+          <View style={styles.thumbnailOverlay} />
+          <Pencil size={24} color="#ffffff" style={styles.pencilOverlay} />
         </TouchableOpacity>
       )}
     </View>
@@ -50,7 +49,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563eb',
     flexDirection: 'row',
     gap: 8,
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#799eecff',
     flexDirection: 'row',
     gap: 8,
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -68,22 +69,25 @@ const styles = StyleSheet.create({
   },
   photoButtonText: { color: '#ffffff', fontFamily: 'Cairo-Bold', fontSize: 16 },
   thumbnailContainer: {
-    width: 50,
-    height: 50,
+    width: 56,
+    height: 56,
     borderRadius: 8,
     overflow: 'hidden',
     ...shadowStyles.card,
   },
   thumbnail: { width: '100%', height: '100%' },
-  editIconContainer: {
+  thumbnailOverlay: {
     position: 'absolute',
+    left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(37, 99, 235, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  pencilOverlay: {
+    position: 'absolute',
+    bottom: '28%',
+    left: '28%',
+    opacity: 0.95,
   },
 });

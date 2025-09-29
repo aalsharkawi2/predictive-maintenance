@@ -15,7 +15,8 @@ const useSystemUI = (style: UIStyle) => {
             StatusBar.setHidden(true, 'fade');
             if (Platform.OS === 'android') {
                 NavigationBar.setVisibilityAsync('hidden');
-                NavigationBar.setBehaviorAsync('inset-swipe');
+                // Use overlay-swipe to avoid content resizing/flicker when bar appears
+                NavigationBar.setBehaviorAsync('overlay-swipe');
             }
         }
     };
@@ -31,7 +32,7 @@ const useSystemUI = (style: UIStyle) => {
             });
 
             return () => {
-                manageUI(true); // Always show when screen loses focus
+                // Do not force-show UI on blur; let the next screen decide.
                 subscription.remove();
             };
         },
